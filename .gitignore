@@ -1,0 +1,4 @@
+*.o
+ballinengine
+ballinengine-valgrind
+ballinengine-debug
