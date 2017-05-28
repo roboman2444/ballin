@@ -39,27 +39,32 @@ int	_CONCAT(NAME, _addRINT)(TYPE inst);\
 void	_CONCAT(NAME, _pruneList)(void);\
 int 	_CONCAT(NAME, _delete)(const int id);\
 
-#define IDLIST_INTERNAL(NAME, TYPE, TYPELIST)\
-\
+#define IDLIST_INTERNAL_NOHASH(NAME, TYPE, TYPELIST)\
 TYPE *	NAME_LIST =0;\
 int	NAME_COUNT =0;\
-int	NAME_ROLL =0;\
+int	NAME_ROLL =1;\
 int	NAME_ARRAYSIZE =0;\
 int	NAME_ARRAYFIRSTOPEN = 0;\
 int	NAME_ARRAYLASTTAKEN = -1;\
 int	NAME_OK =0;\
+
+#define IDLIST_INTERNAL(NAME, TYPE, TYPELIST)\
+IDLIST_INTERNAL_NOHASH(NAME, TYPE, TYPELIST)\
 hashbucket_t	NAME_HASHTABLE[MAXHASHBUCKETS];\
 
 
 
-#define IDLIST_INIT(NAME, TYPE, TYPELIST)\
-memset(NAME_HASHTABLE, 0, MAXHASHBUCKETS * sizeof(hashbucket_t));\
+#define IDLIST_INIT_NOHASH(NAME, TYPE, TYPELIST)\
 if(NAME_LIST)free(NAME_LIST);\
 NAME_LIST 	=0;\
 NAME_COUNT 	=0;\
 NAME_ROLL	=1;/*start it off at 1 for now, so i can test a typeless method*/\
 NAME_ARRAYSIZE	=0;\
 NAME_ARRAYLASTTAKEN	=-1;\
+
+#define IDLIST_INIT(NAME, TYPE, TYPELIST)\
+IDLIST_INIT_NOHASH(NAME, TYPE, TYPELIST)\
+memset(NAME_HASHTABLE, 0, MAXHASHBUCKETS * sizeof(hashbucket_t));\
 
 
 #define IDLIST_CODE(NAME, TYPE, TYPELIST)\
@@ -120,10 +125,11 @@ int _CONCAT(NAME, _delete)(const int id){\
 	int index = (id & 0xFFFF);\
 	TYPE * ret = &NAME_LIST[index];\
 	if(ret->myid != id) return FALSE;\
-	if(!ret->name) return FALSE;\
 	NAME_COUNT--;\
-	hash_deleteFromTable(ret->name, id, NAME_HASHTABLE);\
-	free(ret->name);\
+	if(ret->name){\
+		hash_deleteFromTable(ret->name, id, NAME_HASHTABLE);\
+		free(ret->name);\
+	}\
 	memset(ret, 0, sizeof(TYPE));/*todo just test if setting type/id to 0 is good enough*/\
 	if(index < NAME_ARRAYFIRSTOPEN) NAME_ARRAYFIRSTOPEN = index;\
 	for(; NAME_ARRAYLASTTAKEN > 0 && !NAME_LIST[NAME_ARRAYLASTTAKEN].type; NAME_ARRAYLASTTAKEN--);\
@@ -142,7 +148,7 @@ int _CONCAT(NAME, _addRINT)(TYPE inst){\
 	int returnid = (NAME_ROLL << 16) | NAME_ARRAYFIRSTOPEN;\
 	NAME_LIST[NAME_ARRAYFIRSTOPEN].myid = returnid;\
 \
-	hash_addToTable(NAME_LIST[NAME_ARRAYFIRSTOPEN].name, returnid, NAME_HASHTABLE);\
+	if(inst.name)hash_addToTable(inst.name, returnid, NAME_HASHTABLE);\
 	if(NAME_ARRAYLASTTAKEN < NAME_ARRAYFIRSTOPEN) NAME_ARRAYLASTTAKEN = NAME_ARRAYFIRSTOPEN;\
 	return returnid;\
 }\
@@ -159,7 +165,7 @@ TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
 	int returnid = (NAME_ROLL << 16) | NAME_ARRAYFIRSTOPEN;\
 	NAME_LIST[NAME_ARRAYFIRSTOPEN].myid = returnid;\
 \
-	hash_addToTable(NAME_LIST[NAME_ARRAYFIRSTOPEN].name, returnid, NAME_HASHTABLE);\
+	if(inst.name)hash_addToTable(inst.name, returnid, NAME_HASHTABLE);\
 	if(NAME_ARRAYLASTTAKEN < NAME_ARRAYFIRSTOPEN) NAME_ARRAYLASTTAKEN = NAME_ARRAYFIRSTOPEN;\
 	return &NAME_LIST[NAME_ARRAYFIRSTOPEN];\
 }\
@@ -167,7 +173,70 @@ TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
 
 
 
+
+// a little bloaty here, could cut down on the code re-use
+#define IDLIST_CODE_NOHASH(NAME, TYPE, TYPELIST)\
+TYPE * _CONCAT(NAME, _returnById)(const int id){\
+        int index = (id & 0xFFFF);\
+        TYPE * ret = &NAME_LIST[index];\
+        if(!ret->type) return FALSE;\
+        if(ret->myid == id) return ret;\
+        return FALSE;\
+}\
+\
+void _CONCAT(NAME, _pruneList)(void){\
+	if(NAME_ARRAYSIZE == NAME_ARRAYLASTTAKEN+1) return;\
+	NAME_ARRAYSIZE = NAME_ARRAYLASTTAKEN+1;\
+	NAME_LIST = realloc(NAME_LIST, NAME_ARRAYSIZE * sizeof(TYPE));\
+}\
+\
+int _CONCAT(NAME, _delete)(const int id){\
+	int index = (id & 0xFFFF);\
+	TYPE * ret = &NAME_LIST[index];\
+	if(ret->myid != id) return FALSE;\
+	NAME_COUNT--;\
+	memset(ret, 0, sizeof(TYPE));/*todo just test if setting type/id to 0 is good enough*/\
+	if(index < NAME_ARRAYFIRSTOPEN) NAME_ARRAYFIRSTOPEN = index;\
+	for(; NAME_ARRAYLASTTAKEN > 0 && !NAME_LIST[NAME_ARRAYLASTTAKEN].type; NAME_ARRAYLASTTAKEN--);\
+	return TRUE;\
+}\
+\
+int _CONCAT(NAME, _addRINT)(TYPE inst){\
+	NAME_COUNT++;\
+	NAME_ROLL++;\
+	for(; NAME_ARRAYFIRSTOPEN < NAME_ARRAYSIZE && NAME_LIST[NAME_ARRAYFIRSTOPEN].type; NAME_ARRAYFIRSTOPEN++);\
+	if(NAME_ARRAYFIRSTOPEN == NAME_ARRAYSIZE){\
+		NAME_ARRAYSIZE++;\
+		NAME_LIST = realloc(NAME_LIST, NAME_ARRAYSIZE * sizeof(TYPE));\
+	}\
+	NAME_LIST[NAME_ARRAYFIRSTOPEN] = inst;\
+	int returnid = (NAME_ROLL << 16) | NAME_ARRAYFIRSTOPEN;\
+	NAME_LIST[NAME_ARRAYFIRSTOPEN].myid = returnid;\
+\
+	if(NAME_ARRAYLASTTAKEN < NAME_ARRAYFIRSTOPEN) NAME_ARRAYLASTTAKEN = NAME_ARRAYFIRSTOPEN;\
+	return returnid;\
+}\
+\
+TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
+	NAME_COUNT++;\
+	NAME_ROLL++;\
+	for(; NAME_ARRAYFIRSTOPEN < NAME_ARRAYSIZE && NAME_LIST[NAME_ARRAYFIRSTOPEN].type; NAME_ARRAYFIRSTOPEN++);\
+	if(NAME_ARRAYFIRSTOPEN == NAME_ARRAYSIZE){\
+		NAME_ARRAYSIZE++;\
+		NAME_LIST = realloc(NAME_LIST, NAME_ARRAYSIZE * sizeof(TYPE));\
+	}\
+	NAME_LIST[NAME_ARRAYFIRSTOPEN] = inst;\
+	int returnid = (NAME_ROLL << 16) | NAME_ARRAYFIRSTOPEN;\
+	NAME_LIST[NAME_ARRAYFIRSTOPEN].myid = returnid;\
+\
+	if(NAME_ARRAYLASTTAKEN < NAME_ARRAYFIRSTOPEN) NAME_ARRAYLASTTAKEN = NAME_ARRAYFIRSTOPEN;\
+	return &NAME_LIST[NAME_ARRAYFIRSTOPEN];\
+}\
+
+
+
+
+
 //todo get rid of type... an id of 0 means invalid
-//todo add option for no hashtables/names
 
 #endif
