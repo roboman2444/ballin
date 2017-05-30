@@ -1,7 +1,7 @@
 CC = gcc
 LDFLAGS = -lGL -lGLU -lepoxy -lglfw -lm -ldl
 CFLAGS = -Wall -Ofast -fstrict-aliasing -fprofile-use -march=native
-OBJECTS = ballinengine.o matrixlib.o mathlib.o glfwmanager.o glmanager.o modelmanager.o hashtables.o stringlib.o
+OBJECTS = ballinengine.o matrixlib.o mathlib.o glfwmanager.o glmanager.o vbomanager.o hashtables.o stringlib.o modelmanager.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
