@@ -35,7 +35,7 @@ TYPE *	_CONCAT(NAME, _returnById)(const int id);\
 TYPE *	_CONCAT(NAME, _addRPOINT)(TYPE inst);\
 int	_CONCAT(NAME, _addRINT)(TYPE inst);\
 void	_CONCAT(NAME, _pruneList)(void);\
-int 	_CONCAT(NAME, _delete)(const int id);\
+int 	_CONCAT(NAME, _remove)(const int id);\
 
 #define IDLIST_HEADER(NAME, TYPE, TYPELIST)\
 \
@@ -127,13 +127,13 @@ void _CONCAT(NAME, _pruneList)(void){\
 	_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\
 }\
 \
-int _CONCAT(NAME, _delete)(const int id){\
+int _CONCAT(NAME, _remove)(const int id){\
 	int index = (id & 0xFFFF);\
 	TYPE * ret = &_CONCAT(NAME, _list)[index];\
 	if(ret->myid != id) return FALSE;\
 	_CONCAT(NAME, _count)--;\
 	if(ret->name){\
-		hash_deleteFromTable(ret->name, id, _CONCAT(NAME, _hashtable));\
+		hash_removeFromTable(ret->name, id, _CONCAT(NAME, _hashtable));\
 		free(ret->name);\
 	}\
 	memset(ret, 0, sizeof(TYPE));/*todo just test if setting type/id to 0 is good enough*/\
@@ -196,7 +196,7 @@ void _CONCAT(NAME, _pruneList)(void){\
 	_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\
 }\
 \
-int _CONCAT(NAME, _delete)(const int id){\
+int _CONCAT(NAME, _remove)(const int id){\
 	int index = (id & 0xFFFF);\
 	TYPE * ret = &_CONCAT(NAME, _list)[index];\
 	if(ret->myid != id) return FALSE;\

@@ -1,10 +1,20 @@
 #ifndef VBOMANAGERHEADER
 #define VBOMANAGERHEADER
 
-
+//standard vbo, interleaved
 typedef struct vbo_s {
-	int type; //todo soon to get rid of
+	int type;
 	int myid;
+
+	unsigned int vaoid;
+	unsigned int vertsid;
+	unsigned int facesid; //indices
+	int numverts;
+	int numfaces;
+
+	int totalstride;
+
+	unsigned char stridewidth[MAXATTRIBS]; //will eventually make this longer
 } vbo_t;
 
 #include "idlist.h"
