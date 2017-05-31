@@ -1,7 +1,6 @@
 #include <epoxy/gl.h>
 #include <epoxy/glx.h>
 #include "globaldefs.h"
-#include "vertexattribs.h" //has to come before vbos because of the maxattribs
 #include "vbomanager.h"
 
 

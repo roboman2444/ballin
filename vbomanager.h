@@ -1,5 +1,6 @@
 #ifndef VBOMANAGERHEADER
 #define VBOMANAGERHEADER
+#include "vertexattribs.h"
 
 //standard vbo, interleaved
 typedef struct vbo_s {

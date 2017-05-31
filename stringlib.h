@@ -3,6 +3,7 @@ place to put random string based functions
 */
 #ifndef STRINGLIBHEADER
 #define STRINGLIBHEADER
+#include <string.h> //for everything not here
 
 #define ISWHITESPACE(char) (!(char)||(char)==' '||(char)=='\r'||(char)=='\n'||(char) =='\t')
 #define ISNUM(char) ((char) >= '0' && (char) <= '9')

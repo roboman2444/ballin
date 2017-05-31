@@ -116,7 +116,6 @@ idlist_t _CONCAT(NAME, _findAllByNameRINT)(const char * name){\
 TYPE * _CONCAT(NAME, _returnById)(const int id){\
         int index = (id & 0xFFFF);\
         TYPE * ret = &_CONCAT(NAME, _list)[index];\
-        if(!ret->type) return FALSE;\
         if(ret->myid == id) return ret;\
         return FALSE;\
 }\
@@ -138,14 +137,15 @@ int _CONCAT(NAME, _remove)(const int id){\
 	}\
 	memset(ret, 0, sizeof(TYPE));/*todo just test if setting type/id to 0 is good enough*/\
 	if(index < _CONCAT(NAME, _arrayfirstopen)) _CONCAT(NAME, _arrayfirstopen) = index;\
-	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].type; _CONCAT(NAME, _arraylasttaken)--);\
+	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].myid; _CONCAT(NAME, _arraylasttaken)--);\
 	return TRUE;\
 }\
 \
 int _CONCAT(NAME, _addRINT)(TYPE inst){\
 	_CONCAT(NAME, _count)++;\
 	_CONCAT(NAME, _roll)++;\
-	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].type; _CONCAT(NAME, _arrayfirstopen)++);\
+	if(_CONCAT(NAME, _roll) > 65535) _CONCAT(NAME, _roll) = 1;/* no possible way for IDs to be 0 now */\
+	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].myid; _CONCAT(NAME, _arrayfirstopen)++);\
 	if(_CONCAT(NAME, _arrayfirstopen) == _CONCAT(NAME, _arraysize)){\
 		_CONCAT(NAME, _arraysize)++;\
 		_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\
@@ -162,7 +162,7 @@ int _CONCAT(NAME, _addRINT)(TYPE inst){\
 TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
 	_CONCAT(NAME, _count)++;\
 	_CONCAT(NAME, _roll)++;\
-	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].type; _CONCAT(NAME, _arrayfirstopen)++);\
+	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].myid; _CONCAT(NAME, _arrayfirstopen)++);\
 	if(_CONCAT(NAME, _arrayfirstopen) == _CONCAT(NAME, _arraysize)){\
 		_CONCAT(NAME, _arraysize)++;\
 		_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\
@@ -185,7 +185,6 @@ TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
 TYPE * _CONCAT(NAME, _returnById)(const int id){\
         int index = (id & 0xFFFF);\
         TYPE * ret = &_CONCAT(NAME, _list)[index];\
-        if(!ret->type) return FALSE;\
         if(ret->myid == id) return ret;\
         return FALSE;\
 }\
@@ -203,14 +202,14 @@ int _CONCAT(NAME, _remove)(const int id){\
 	_CONCAT(NAME, _count)--;\
 	memset(ret, 0, sizeof(TYPE));/*todo just test if setting type/id to 0 is good enough*/\
 	if(index < _CONCAT(NAME, _arrayfirstopen)) _CONCAT(NAME, _arrayfirstopen) = index;\
-	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].type; _CONCAT(NAME, _arraylasttaken)--);\
+	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].myid; _CONCAT(NAME, _arraylasttaken)--);\
 	return TRUE;\
 }\
 \
 int _CONCAT(NAME, _addRINT)(TYPE inst){\
 	_CONCAT(NAME, _count)++;\
 	_CONCAT(NAME, _roll)++;\
-	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].type; _CONCAT(NAME, _arrayfirstopen)++);\
+	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].myid; _CONCAT(NAME, _arrayfirstopen)++);\
 	if(_CONCAT(NAME, _arrayfirstopen) == _CONCAT(NAME, _arraysize)){\
 		_CONCAT(NAME, _arraysize)++;\
 		_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\
@@ -226,7 +225,7 @@ int _CONCAT(NAME, _addRINT)(TYPE inst){\
 TYPE * _CONCAT(NAME, _addRPOINT)(TYPE inst){\
 	_CONCAT(NAME, _count)++;\
 	_CONCAT(NAME, _roll)++;\
-	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].type; _CONCAT(NAME, _arrayfirstopen)++);\
+	for(; _CONCAT(NAME, _arrayfirstopen) < _CONCAT(NAME, _arraysize) && _CONCAT(NAME, _list)[_CONCAT(NAME, _arrayfirstopen)].myid; _CONCAT(NAME, _arrayfirstopen)++);\
 	if(_CONCAT(NAME, _arrayfirstopen) == _CONCAT(NAME, _arraysize)){\
 		_CONCAT(NAME, _arraysize)++;\
 		_CONCAT(NAME, _list) = realloc(_CONCAT(NAME, _list), _CONCAT(NAME, _arraysize) * sizeof(TYPE));\

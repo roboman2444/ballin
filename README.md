@@ -35,3 +35,4 @@ The game artstyle that will be running on this engine is "clean and colorful", s
 * Darkplaces Matrixlib (some modifications)
 * LibEpoxy (replaced my usual GLEW usage)
 * GLFW
+* IQM by lsalzman
