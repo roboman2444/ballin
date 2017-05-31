@@ -32,7 +32,7 @@ int hash_addToTable(const char * name, int id, hashbucket_t * ht){
 	hb->next = 0;
 	return hash;
 }
-int hash_deleteFromTable(const char * name, int id, hashbucket_t *ht){
+int hash_removeFromTable(const char * name, int id, hashbucket_t *ht){
 	int hash = hash_get(name);
 	hashbucket_t * hb = &ht[hash];
 	if(hb->id == id){ // check first one

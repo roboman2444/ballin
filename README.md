@@ -16,6 +16,7 @@ A whole lotta TODO
 
 ## Maybes
 * Opengl 4.whatever advanced features (multi draw indirect, compute shaders, etc)
+* LOD
 * Reflections
 * PBR
 * SSAO (or SSAO-like effect like SSDO), must be clean and not farcry3
