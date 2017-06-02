@@ -1,7 +1,12 @@
 # ballin engine
 
 ## TODO
-A whole lotta TODO
+* Get a very basic renderer done
+* Get gamecode working
+* Networking
+* Physics
+* Audio
+* More advanced features
 
 ## Plans
 * GL 3.3 CORE + maybe newer GL features if the card supports it
