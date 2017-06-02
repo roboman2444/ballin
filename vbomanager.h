@@ -8,14 +8,15 @@ typedef struct vbo_s {
 	int myid;
 
 	unsigned int vaoid;
-	unsigned int vertsid;
+//	unsigned int vertsid;
+	unsigned int vertsid[MAXATTRIBS];
 	unsigned int facesid; //indices
 	int numverts;
 	int numfaces;
 
-	int totalstride;
+//	int totalstride;
 
-	unsigned char stridewidth[MAXATTRIBS]; //will eventually make this longer
+	unsigned char datawidth[MAXATTRIBS]; //will eventually make this longer
 } vbo_t;
 
 #include "idlist.h"
@@ -23,5 +24,6 @@ typedef struct vbo_s {
 IDLIST_HEADER_NOHASH(vbo, vbo_t);
 
 int vbo_init(void);
+int vbo_setup(vbo_t *v);
 
 #endif

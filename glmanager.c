@@ -6,6 +6,12 @@
 #include "glmanager.h"
 
 
+
+
+#include "vbomanager.h"		//for init
+#include "modelmanager.h"	//for init
+
+
 //todo move into glinit and then just keep track of the lowest?
 int msaa_maxSamples=0, msaa_maxIntSamples=0, msaa_maxColorSamples=0, msaa_maxDepthSamples=0;
 
@@ -62,6 +68,9 @@ int gl_init(void){
 	glGetIntegerv(GL_MAX_DEPTH_TEXTURE_SAMPLES,	&msaa_maxDepthSamples);
 
 	printf("MSAA Samples: %i, int %i, color %i, depth %i\n", msaa_maxSamples, msaa_maxIntSamples, msaa_maxColorSamples, msaa_maxDepthSamples);
+
+	vbo_init();
+	model_init();
 
 	return TRUE;
 }

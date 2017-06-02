@@ -1,13 +1,11 @@
 #ifndef MODELMANAGERHEADER
 #define MODELMANAGERHEADER
 typedef struct model_s {
-	int type; //1 is registered, 2 is model loaded (kindof), 3 is vbos setup, 4 is postprocessing done
-		//type should really only ever be 1 or 4
+	int type;//todo figure out types
 	int myid;
 	char * name;
-	vbo_t mvbo; //not tracked by the idlist
+	vbo_t vbo; //not tracked by the idlist
 
-	float * interleaveddata;
 } model_t;
 
 typedef struct modellist_s {

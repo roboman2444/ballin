@@ -1,3 +1,6 @@
+#include <epoxy/gl.h>
+#include <epoxy/glx.h>
+
 #include "globaldefs.h"
 #include "vbomanager.h"
 #include "modelmanager.h"
@@ -25,6 +28,52 @@ int model_register(char * name){
 }
 
 
+int loadIQMMeshes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
+	//todo multiple meshes support (would be helpful)
+	int numfaces =	hdr.num_triangles;
+	int numverts =	hdr.num_vertexes;
+	if(numverts<1){
+		printf("MODEL/loadIQMMeshes error vertex count is 0 (or less) for mesh # %i of model %s\n", 0, m->name);
+		return FALSE;
+	}
+	float * dataptrs[MAXATTRIBS] = {0};
+	int i;
+	struct iqmvertexarray *vas = (struct iqmvertexarray *) &buf[hdr.ofs_vertexarrays];
+	for(i = 0; i < (int)hdr.num_vertexarrays; i++){
+		struct iqmvertexarray va = vas[i];
+		switch(va.type){
+			case IQM_POSITION:	if(va.format == IQM_FLOAT && va.size == 3) dataptrs[0] = (float *)&buf[va.offset]; m->vbo.datawidth[0] = 3; break;
+			case IQM_NORMAL:	if(va.format == IQM_FLOAT && va.size == 3) dataptrs[1] = (float *)&buf[va.offset]; m->vbo.datawidth[1] = 3; break;
+			case IQM_TANGENT:	if(va.format == IQM_FLOAT && va.size == 3) dataptrs[2] = (float *)&buf[va.offset]; m->vbo.datawidth[2] = 3; break; //todo double check that its actually 3?
+//			case IQM_COLOR:		if(va.format == IQM_FLOAT && va.size == 3) dataptrs[3] = (float *)&buf[va.offset]; m->vbo.datawidth[3] = 3; break; //todo color support (current float in vbos)
+			case IQM_TEXCOORD:	if(va.format == IQM_FLOAT && va.size == 2) dataptrs[4] = (float *)&buf[va.offset]; m->vbo.datawidth[4] = 2; break;
+		}
+	}
+	if(!dataptrs[0]){
+		printf("MODEL/loadIQMMeshes error no position data found for mesh # %i of model %s\n", 0, m->name);
+		return FALSE;
+	}
+
+	vbo_setup(&m->vbo);
+	if(m->vbo.type != 3){
+		printf("MODEL/loadIQMMeshes error VBO failed to initialize for mesh # %i of model %s\n", 0, m->name);
+		return FALSE;
+	}
+	for(i = 0; i < MAXATTRIBS; i++){
+		int dwidth = m->vbo.datawidth[i];
+		if(!dwidth) continue;
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo.vertsid[i]);
+		glBufferData(GL_ARRAY_BUFFER, numverts * dwidth * sizeof(GLfloat), dataptrs[i], GL_STATIC_DRAW);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo.facesid);
+	glBufferData(GL_ARRAY_BUFFER, numfaces * 3 * sizeof(GLuint), (GLuint *) &buf[hdr.ofs_triangles], GL_STATIC_DRAW);
+	m->vbo.numverts =numverts;
+	m->vbo.numfaces =numfaces;
+	return TRUE;
+}
+
+
+
 
 int loadModelIQM(model_t *m){
 	//somewhat copied from the SDK
@@ -41,21 +90,19 @@ int loadModelIQM(model_t *m){
 	if(fread(buf + sizeof(hdr), 1, hdr.filesize - sizeof(hdr), f) != hdr.filesize - sizeof(hdr))
 		goto error;
 //todo actually load
-//	if(hdr.num_meshes > 0 && !loadiqmmeshes(m, hdr, buf)) goto error;
+	if(hdr.num_meshes > 0 && !loadIQMMeshes(m, hdr, buf)) goto error;
 //todo handle joints
 //	if(hdr.num_joints > 0 && !loadiqmjoints(m, hdr, buf)) goto error;
 //Not handling poses here
 //Not handling IQM bboxes here
-	if(m->interleaveddata) free(m->interleaveddata);
-	m->interleaveddata = 0;
 
 	fclose(f);
 	free(buf);
 	return TRUE;
 
 	error:
-	if(m->interleaveddata) free(m->interleaveddata);
-	m->interleaveddata = 0;
+
+	//TODO check if the VBO has been messed with, and if it has, get rid of the alloc
 	printf("MODEL/loadModelIQM error while loading %s\n", m->name);
 	free(buf);
 	fclose(f);
@@ -63,6 +110,7 @@ int loadModelIQM(model_t *m){
 }
 
 int model_load(model_t *m){
+	//TODO
 	switch(m->type){
 		case 1:
 			if(!loadModelIQM(m)) return FALSE;
@@ -70,14 +118,14 @@ int model_load(model_t *m){
 		case 2:
 			m->type = 3;
 		case 3:
-			return 3;
 		default:
-		return FALSE;
+		return m->type;
 	}
 	return FALSE;
 }
 
 int model_unload(model_t *m){
+//TODO
 	return FALSE;
 }
 
