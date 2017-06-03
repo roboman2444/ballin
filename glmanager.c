@@ -71,6 +71,9 @@ int gl_init(void){
 
 	vbo_init();
 	model_init();
+	int mid = model_register("test.iqm");
+	printf("registered model id %i\n", mid);
+	model_load(model_returnById(mid));
 
 	return TRUE;
 }

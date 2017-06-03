@@ -21,8 +21,9 @@ int model_register(char * name){
 	//check if model exists
 	int ret = model_findByNameRINT(name);
 	if(ret) return ret;
-	model_t m;
+	model_t m = {0};
 	m.type = 1;
+	m.vbo.type = 1; //trick the vbo manager to thinking its tracked
 	m.name = strdup(name);
 	return model_addRINT(m);
 }
@@ -50,13 +51,12 @@ int loadIQMMeshes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
 		}
 	}
 	if(!dataptrs[0]){
-		printf("MODEL/loadIQMMeshes error no position data found for mesh # %i of model %s\n", 0, m->name);
+		printf("MODEL/loadIQMMeshes error no position data found for mesh #%i of model %s\n", 0, m->name);
 		return FALSE;
 	}
 
-	vbo_setup(&m->vbo);
-	if(m->vbo.type != 3){
-		printf("MODEL/loadIQMMeshes error VBO failed to initialize for mesh # %i of model %s\n", 0, m->name);
+	if(vbo_setup(&m->vbo) != 3){
+		printf("MODEL/loadIQMMeshes error VBO failed to initialize for mesh #%i of model %s (vbo->type is %i)\n", 0, m->name, m->vbo.type);
 		return FALSE;
 	}
 	for(i = 0; i < MAXATTRIBS; i++){
@@ -117,6 +117,7 @@ int model_load(model_t *m){
 			m->type = 2;
 		case 2:
 			m->type = 3;
+			printf("loaded model %s with %i faces and %i verts\n", m->name, m->vbo.numfaces, m->vbo.numverts);
 		case 3:
 		default:
 		return m->type;

@@ -23,7 +23,12 @@ int vbo_setup(vbo_t *vbo){
 			glGenVertexArrays(1, &vbo->vaoid);
 			int i;
 			for(i =0; i< MAXATTRIBS; i++){
-				if(vbo->datawidth[i]) glGenBuffers(1, &vbo->vertsid[i]);
+				if(!vbo->datawidth[i])continue;
+				glGenBuffers(1, &vbo->vertsid[i]);
+				if(!vbo->vertsid[i]){
+					printf("VBO/vbo_setup error glGenBuffers returned 0 for attrib %i\n", i);
+					return vbo->type;
+				}
 			}
 			glGenBuffers(1, &vbo->facesid);
 			vbo->type = 2;
