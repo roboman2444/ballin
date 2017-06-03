@@ -9,7 +9,9 @@
 
 
 #include "vbomanager.h"		//for init
-#include "modelmanager.h"	//for init
+#include "modelmanager.h"	//for init, register, load
+
+#include "shadermanager.h"	//for init, register, load
 
 
 //todo move into glinit and then just keep track of the lowest?
@@ -71,9 +73,14 @@ int gl_init(void){
 
 	vbo_init();
 	model_init();
+	shader_init();
 	int mid = model_register("test.iqm");
 	printf("registered model id %i\n", mid);
 	model_load(model_returnById(mid));
+
+	int sid = shader_register("test.program");
+	printf("registered shader id %i\n", sid);
+	shader_load(shader_returnById(sid));
 
 	return TRUE;
 }

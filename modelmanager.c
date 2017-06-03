@@ -6,6 +6,9 @@
 #include "modelmanager.h"
 #include "stringlib.h"	//for idlist
 
+
+#include "filesys.h"	//for file ops
+
 #include "iqm.h"	//for iqm handling
 
 
@@ -77,17 +80,17 @@ int loadIQMMeshes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
 
 int loadModelIQM(model_t *m){
 	//somewhat copied from the SDK
-	FILE *f = fopen(m->name, "rb");
-	if(!f) return FALSE;
+	file_t f = file_open(m->name, "rb");
+	if(!f.f) return FALSE;
 
 	unsigned char * buf = NULL;
 	struct iqmheader hdr;
-	if(fread(&hdr, 1, sizeof(hdr), f) != sizeof(hdr) || memcmp(hdr.magic, IQM_MAGIC, sizeof(hdr.magic)))
+	if(file_read(&hdr, 1, sizeof(hdr), &f) != sizeof(hdr) || memcmp(hdr.magic, IQM_MAGIC, sizeof(hdr.magic)))
 	goto error; //spaghetti!
 	if(hdr.version != IQM_VERSION)goto error;
 	if(hdr.filesize > (16<<20)) goto error; // sanity check... don't load files bigger than 16 MB
 	buf = malloc(hdr.filesize);
-	if(fread(buf + sizeof(hdr), 1, hdr.filesize - sizeof(hdr), f) != hdr.filesize - sizeof(hdr))
+	if(file_read(buf + sizeof(hdr), 1, hdr.filesize - sizeof(hdr), &f) != hdr.filesize - sizeof(hdr))
 		goto error;
 //todo actually load
 	if(hdr.num_meshes > 0 && !loadIQMMeshes(m, hdr, buf)) goto error;
@@ -96,7 +99,7 @@ int loadModelIQM(model_t *m){
 //Not handling poses here
 //Not handling IQM bboxes here
 
-	fclose(f);
+	file_close(&f);
 	free(buf);
 	return TRUE;
 
@@ -105,7 +108,7 @@ int loadModelIQM(model_t *m){
 	//TODO check if the VBO has been messed with, and if it has, get rid of the alloc
 	printf("MODEL/loadModelIQM error while loading %s\n", m->name);
 	free(buf);
-	fclose(f);
+	file_close(&f);
 	return FALSE;
 }
 
