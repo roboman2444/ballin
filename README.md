@@ -10,7 +10,7 @@
 
 ## Plans
 * GL 3.3 CORE + maybe newer GL features if the card supports it
-* BSP maps? (similar to quake 3 or something)
+* Custom map format (really simple though)
 * Lightmaps + dynamic lightmap shadows
 * Realtime dynamic lighting and shadows
 * Forward+ sorta thing
