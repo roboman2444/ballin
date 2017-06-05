@@ -78,7 +78,7 @@ int gl_init(void){
 	printf("registered model id %i\n", mid);
 	model_load(model_returnById(mid));
 
-	int sid = shader_register("test.program");
+	int sid = shader_register("shaders/test.program");
 	printf("registered shader id %i\n", sid);
 	shader_load(shader_returnById(sid));
 

@@ -1,11 +1,23 @@
-#ifndef SHADERNAGERHEADER
+#ifndef SHADERNANAGERHEADER
 #define SHADERMANAGERHEADER
+typedef struct shadersource_s {
+	char * filename;
+	char * data;
+	int length; //todo
+	struct shadersource_s * next; //linked listy
+}shadersource_t;
+
 typedef struct shader_s {
 	int type;//todo figure out types
 	int myid;
 	char * name;
-	unsigned int programid;
-	//todo figure out uniform locations and whatnot
+	unsigned int programid; //todo move?
+	unsigned int vertid;	//todo move?
+	unsigned int fragid;
+	unsigned int geomid;
+	shadersource_t * vsources;
+	shadersource_t * fsources;
+	shadersource_t * gsources;
 } shader_t;
 
 typedef struct shaderlist_s { //todo move these into idlist?

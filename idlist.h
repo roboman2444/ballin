@@ -84,7 +84,7 @@ int _CONCAT(NAME, _findByNameRINT)(const char * name){\
 }\
 \
 TYPELIST _CONCAT(NAME, _findAllByNameRPOINT)(const char * name){\
-	TYPELIST ret;\
+	TYPELIST ret = {0};\
 	int hash = hash_get(name);\
 	hashbucket_t * hb = &_CONCAT(NAME, _hashtable)[hash];\
 	if(!hb->name) return ret;\
@@ -99,7 +99,7 @@ TYPELIST _CONCAT(NAME, _findAllByNameRPOINT)(const char * name){\
 }\
 \
 idlist_t _CONCAT(NAME, _findAllByNameRINT)(const char * name){\
-	idlist_t ret;\
+	idlist_t ret = {0};\
 	int hash = hash_get(name);\
 	hashbucket_t * hb = &_CONCAT(NAME, _hashtable)[hash];\
 	if(!hb->name) return ret;\

@@ -21,6 +21,10 @@ int file_close(file_t *f);
 size_t file_read(void *ptr, size_t size, size_t nmemb, file_t *f);
 size_t file_write(const void *ptr, size_t size, size_t nmemb, file_t *f);
 
+size_t file_getSize(file_t *f);
+
+//ease of use... loads file at filename into an allocated buffer.
+int file_loadString(const char * filename, char ** output);
 
 
 
