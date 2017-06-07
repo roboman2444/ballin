@@ -41,6 +41,32 @@ int shader_loadSources(shadersource_t *s){
 	return i;
 }
 
+
+int shader_printProgramLogStatus(const int id){
+	GLint blen = 0;
+	glGetProgramiv(id, GL_INFO_LOG_LENGTH, &blen);
+	if(blen > 1){
+		GLchar * log = (GLchar *) malloc(blen);
+		glGetProgramInfoLog(id, blen, 0, log);
+		printf("Program %i log %s \n", id, log);
+		free(log);
+		return blen;
+	}
+	return FALSE;
+}
+int shader_printShaderLogStatus(const int id){
+	GLint blen = 0;
+	glGetShaderiv(id, GL_INFO_LOG_LENGTH, &blen);
+	if(blen > 1){
+		GLchar * log = (GLchar *) malloc(blen);
+		glGetShaderInfoLog(id, blen, 0, log);
+		printf("Shader %i log %s \n", id, log);
+		free(log);
+		return blen;
+	}
+	return FALSE;
+}
+
 //todo slam some stuff
 int shader_compile(shader_t *s){
 	if(!s){
@@ -98,6 +124,33 @@ int shader_compile(shader_t *s){
 	glCompileShader(s->fragid);
 	if(gsc)glCompileShader(s->geomid);
 	//TODO statuses
+	int fail=0;
+	int status = GL_FALSE;
+	glGetShaderiv(s->vertid, GL_COMPILE_STATUS, &status);
+	if(shader_printShaderLogStatus(s->vertid) || status == GL_FALSE){
+		//todo other stuff?
+		fail++;
+	}
+	glGetShaderiv(s->fragid, GL_COMPILE_STATUS, &status);
+	if(shader_printShaderLogStatus(s->fragid) || status == GL_FALSE){
+		//todo other stuff?
+		fail++;
+	}
+	if(gsc){
+		glGetShaderiv(s->geomid, GL_COMPILE_STATUS, &status);
+		if(shader_printShaderLogStatus(s->geomid) || status == GL_FALSE){
+			//todo other stuff?
+			fail++;
+		}
+	}
+	if(fail){
+		printf("SHADER/compile error %i shaders failed to compile\n", fail);
+//		glDeleteShader(s->vertid);
+//		glDeleteShader(s->fragid);
+//		if(gsc)glDeleteShader(s->geomid);
+//		s->vertid = s->fragid = s->geomid = 0;
+//		return FALSE; //todo clean up
+	}
 
 	s->programid = glCreateProgram();
 	glAttachShader(s->programid, s->vertid);
@@ -105,19 +158,44 @@ int shader_compile(shader_t *s){
 	if(gsc)glAttachShader(s->programid, s->geomid);
 	//todo bind data locations
 
-	//todo bind attrib locations
+	//todo?
+	glBindFragDataLocation(s->programid, 0, "fragData0");
+	glBindFragDataLocation(s->programid, 1, "fragData1");
+	glBindFragDataLocation(s->programid, 2, "fragData2");
+	glBindFragDataLocation(s->programid, 3, "fragData3");
+
+	glBindAttribLocation(s->programid, 0, "attrib0");
+	glBindAttribLocation(s->programid, 1, "attrib1");
+	glBindAttribLocation(s->programid, 2, "attrib2");
+	glBindAttribLocation(s->programid, 3, "attrib3");
+	glBindAttribLocation(s->programid, 4, "attrib4");
+	glBindAttribLocation(s->programid, 5, "attrib5");
 
 	glLinkProgram(s->programid);
 	glDeleteShader(s->vertid);
 	glDeleteShader(s->fragid);
 	if(gsc)glDeleteShader(s->geomid);
 
-	//todo get link status
+	//get the status
+
+	glGetProgramiv(s->fragid, GL_LINK_STATUS, &status);
+	if(shader_printProgramLogStatus(s->fragid) || status == GL_FALSE){
+		printf("SHADER/compile error shader program %i failed to link\n", s->programid);
+		glDeleteProgram(s->programid);
+		return FALSE;
+	}
+
 
 	glUseProgram(s->programid); //todo state
 
 	//todo get uniform locations
-	//todo set texture locations? (or am i just gonna force it in the shader?)
+
+	char texstring[16]; //little extra room
+	for(i = 0; i < 16; i++){
+		sprintf(texstring, "texture%i", i);
+		GLuint texpos = glGetUniformLocation(s->programid, texstring);
+		glUniform1i(texpos, i);
+	}
 
 	//todo bind uniform blocks
 
