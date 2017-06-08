@@ -16,6 +16,7 @@
 
 //#include "viewportmanager.h"		//uh... do i need this here?
 extern int viewport_init(void);
+extern int viewport_shutdown(void);
 
 
 //todo move into glinit and then just keep track of the lowest?
@@ -26,6 +27,9 @@ int gl_shutdown(void){
 	printf("renderer shutting down\n");
 
 	shader_shutdown();
+	model_shutdown();
+	vbo_shutdown();
+	viewport_shutdown();
 	return TRUE; //successful shutdown
 }
 

@@ -49,4 +49,12 @@ int vbo_setup(vbo_t *vbo){
 }
 
 
+int vbo_unload(vbo_t *v){
+	glDeleteBuffers(MAXATTRIBS, v->vertsid);
+	glDeleteBuffers(1, &v->facesid);
+	glDeleteVertexArrays(1, &v->vaoid);
+	return TRUE;
+}
+
+
 IDLIST_CODE_NOHASH(vbo, vbo_t);

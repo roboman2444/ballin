@@ -288,6 +288,12 @@ int testBBoxPInFrustumCheckWhole(viewport_t *v, vec_t *points){
 }
 
 
+int viewport_unload(viewport_t *v){
+	//TODO
+	return FALSE;
+}
+
+
 
 
 IDLIST_CODE_NOHASH(viewport, viewport_t);

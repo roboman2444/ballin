@@ -153,7 +153,30 @@ int model_load(model_t *m){
 
 int model_unload(model_t *m){
 //TODO
-	return FALSE;
+	//unload vbo
+	vbo_unload(&m->vbo);
+	return TRUE;
 }
-
+/*
+int model_shutdown(void){
+	//lots of TODO
+	if(model_list){
+		int i;
+		for(i = 0; i < model_arraylasttaken; i++){
+			if(!model_list[i].type)continue;
+			model_unload(&model_list[i]);
+			model_remove(model_list[i].myid);
+		}
+		free(model_list);
+	}
+	model_list = 0;
+	model_ok = 0;
+	model_count = 0;
+	model_roll = 1;
+	model_arraysize = 0;
+	model_arrayfirstopen = 0;
+	model_arraylasttaken = -1;
+	return TRUE;
+}
+*/
 IDLIST_CODE(model, model_t, modellist_t);

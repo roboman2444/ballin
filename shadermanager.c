@@ -336,7 +336,7 @@ int shader_unload(shader_t *s){
 	return FALSE;
 }
 
-
+/*
 int shader_shutdown(void){
 	//lots of TODO
 	if(shader_list){
@@ -347,10 +347,15 @@ int shader_shutdown(void){
 			shader_remove(shader_list[i].myid);
 		}
 		free(shader_list);
-		shader_list = 0;
 	}
+	shader_list = 0;
 	shader_ok = 0;
+	shader_count = 0;
+	shader_roll = 1;
+	shader_arraysize = 0;
+	shader_arrayfirstopen = 0;
+	shader_arraylasttaken = -1;
 	return TRUE;
 }
-
+*/
 IDLIST_CODE(shader, shader_t, shaderlist_t);

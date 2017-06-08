@@ -28,5 +28,7 @@ int model_load(model_t *m);
 
 int model_unload(model_t *m);
 
+int model_shutdown(void);
+
 
 #endif

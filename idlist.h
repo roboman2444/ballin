@@ -36,6 +36,7 @@ TYPE *	_CONCAT(NAME, _addRPOINT)(TYPE inst);\
 int	_CONCAT(NAME, _addRINT)(TYPE inst);\
 void	_CONCAT(NAME, _pruneList)(void);\
 int 	_CONCAT(NAME, _remove)(const int id);\
+int 	_CONCAT(NAME, _shutdown)(void);\
 
 #define IDLIST_HEADER(NAME, TYPE, TYPELIST)\
 \
@@ -141,6 +142,26 @@ int _CONCAT(NAME, _remove)(const int id){\
 	return TRUE;\
 }\
 \
+int _CONCAT(NAME, _shutdown)(void){\
+	int i = 0;\
+	if(_CONCAT(NAME, _list)){\
+		for(i = 0; i <= _CONCAT(NAME, _arraylasttaken); i++){\
+			if(!_CONCAT(NAME, _list)[i].myid)continue;\
+			_CONCAT(NAME, _unload)(&_CONCAT(NAME, _list)[i]);\
+			_CONCAT(NAME, _remove)(_CONCAT(NAME, _list)[i].myid);\
+		}\
+		free(_CONCAT(NAME, _list));\
+	}\
+	_CONCAT(NAME, _list) = 0;\
+	_CONCAT(NAME, _ok) = 0;\
+	_CONCAT(NAME, _count) = 0;\
+	_CONCAT(NAME, _roll) = 1;\
+	_CONCAT(NAME, _arraysize) = 0;\
+	_CONCAT(NAME, _arrayfirstopen) = 0;\
+	_CONCAT(NAME, _arraylasttaken) = -1;\
+	return i;\
+}\
+\
 int _CONCAT(NAME, _addRINT)(TYPE inst){\
 	_CONCAT(NAME, _count)++;\
 	_CONCAT(NAME, _roll)++;\
@@ -204,6 +225,26 @@ int _CONCAT(NAME, _remove)(const int id){\
 	if(index < _CONCAT(NAME, _arrayfirstopen)) _CONCAT(NAME, _arrayfirstopen) = index;\
 	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].myid; _CONCAT(NAME, _arraylasttaken)--);\
 	return TRUE;\
+}\
+\
+int _CONCAT(NAME, _shutdown)(void){\
+	int i = 0;\
+	if(_CONCAT(NAME, _list)){\
+		for(i = 0; i <= _CONCAT(NAME, _arraylasttaken); i++){\
+			if(!_CONCAT(NAME, _list)[i].myid)continue;\
+			_CONCAT(NAME, _unload)(&_CONCAT(NAME, _list)[i]);\
+			_CONCAT(NAME, _remove)(_CONCAT(NAME, _list)[i].myid);\
+		}\
+		free(_CONCAT(NAME, _list));\
+	}\
+	_CONCAT(NAME, _list) = 0;\
+	_CONCAT(NAME, _ok) = 0;\
+	_CONCAT(NAME, _count) = 0;\
+	_CONCAT(NAME, _roll) = 1;\
+	_CONCAT(NAME, _arraysize) = 0;\
+	_CONCAT(NAME, _arrayfirstopen) = 0;\
+	_CONCAT(NAME, _arraylasttaken) = -1;\
+	return i;\
 }\
 \
 int _CONCAT(NAME, _addRINT)(TYPE inst){\
