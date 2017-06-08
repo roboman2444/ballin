@@ -1,6 +1,6 @@
 CC = gcc
 LDFLAGS = -lGL -lGLU -lepoxy -lglfw -lm -ldl
-CFLAGS = -Wall -Ofast -fstrict-aliasing -fprofile-use -march=native
+CFLAGS = -Wall -Ofast -fstrict-aliasing -fprofile-use -march=native -g
 OBJECTS = ballinengine.o matrixlib.o mathlib.o glfwmanager.o glmanager.o vbomanager.o hashtables.o stringlib.o modelmanager.o shadermanager.o filesys.o viewportmanager.o
 
 %.o: %.c

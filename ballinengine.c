@@ -10,6 +10,9 @@
 
 
 int shutitdown(){
+	printf("Shutting down\n");
+	gl_shutdown();
+	glfw_shutdown();
 	//todo
 	return FALSE;
 }
@@ -18,5 +21,6 @@ int shutitdown(){
 int main(int argc, char *argv[]){
 	if(!glfw_init(800, 600, 24,1)){printf("Unable to init glfw\n"); shutitdown();}
 	if(!gl_init()){printf("Unable to init gl\n"); shutitdown();}
+	shutitdown();
 	return FALSE;
 }

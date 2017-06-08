@@ -13,6 +13,7 @@
 
 
 #include "hashtables.h"	//for idlist
+#include "mathlib.h"	//for bbox stuff currently
 IDLIST_INTERNAL(model, model_t, modellist_t);
 
 int model_init(void){
@@ -29,6 +30,26 @@ int model_register(char * name){
 	m.vbo.type = 1; //trick the vbo manager to thinking its tracked
 	m.name = strdup(name);
 	return model_addRINT(m);
+}
+
+//VERY UNTESTED
+int genIQMBBoxes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
+	//TODO
+	return TRUE;
+}
+
+//VERY UNTESTED
+int loadIQMBBoxes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
+	struct iqmbounds *b = (struct iqmbounds *) &buf[hdr.ofs_bounds];
+	m->bbox[0] = b->bbmin[0];
+	m->bbox[1] = b->bbmax[0];
+	m->bbox[2] = b->bbmin[1];
+	m->bbox[3] = b->bbmax[1];
+	m->bbox[4] = b->bbmin[2];
+	m->bbox[5] = b->bbmax[2];
+
+	getBBoxPFromBBox(m->bbox, m->bboxp);
+	return TRUE;
 }
 
 
@@ -97,7 +118,9 @@ int loadModelIQM(model_t *m){
 //todo handle joints
 //	if(hdr.num_joints > 0 && !loadiqmjoints(m, hdr, buf)) goto error;
 //Not handling poses here
-//Not handling IQM bboxes here
+
+	//first try to manually load the pregenerated bbox, then try to generate them from mesh data if that fails
+	if(!loadIQMBBoxes(m,hdr, buf) && !genIQMBBoxes(m, hdr, buf)) goto error;
 
 	file_close(&f);
 	free(buf);

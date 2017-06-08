@@ -36,5 +36,7 @@ int shader_register(char * name);
 int shader_load(shader_t *s);
 int shader_unload(shader_t *s);
 
+int shader_shutdown(void);
+
 
 #endif

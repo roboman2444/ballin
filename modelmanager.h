@@ -6,6 +6,9 @@ typedef struct model_s {
 	char * name;
 	vbo_t vbo; //not tracked by the idlist
 
+	vec_t bboxp[24];
+	vec_t bbox[6];
+
 } model_t;
 
 typedef struct modellist_s {

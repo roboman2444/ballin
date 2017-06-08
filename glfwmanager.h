@@ -7,4 +7,7 @@
 	const char ** glfw_extensions;
 	unsigned int glfw_extensions_count;
 
+
+	int glfw_shutdown(void);
+
 #endif

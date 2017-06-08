@@ -83,3 +83,11 @@ int glfw_checkEvent(void){
 	if(iw != winwidth || ih != winheight) glfw_resizeWindow(iw, ih, 24, 0);
 	return TRUE;
 }
+
+
+int glfw_shutdown(void){
+	//TODO so much TODO
+	printf("glfw shutting down\n");
+	glfwTerminate();
+	return TRUE;
+}

@@ -27,6 +27,19 @@ int shader_register(char * name){
 	return shader_addRINT(s);
 }
 
+
+int shader_deleteSources(shadersource_t *s){
+	int i;
+	for(i = 0; s; i++){
+		if(s->filename) free(s->filename);
+		if(s->data) free(s->data);
+		shadersource_t *olds = s;
+		s = s->next;
+		free(olds);
+	}
+	return i;
+}
+
 int shader_loadSources(shadersource_t *s){
 	int i;
 	for(i = 0; s; s=s->next, i++){
@@ -309,9 +322,35 @@ int shader_load(shader_t *s){
 }
 
 
-int shader_unload(shader_t *m){
-//TODO
+int shader_unload(shader_t *s){
+	//free shader sources (and data)
+	if(s->vsources)shader_deleteSources(s->vsources);
+	if(s->fsources)shader_deleteSources(s->fsources);
+	if(s->gsources)shader_deleteSources(s->gsources);
+	s->vsources = s->fsources = s->gsources = 0;
+	//todo check before deleting
+	glDeleteProgram(s->programid);
+	glDeleteShader(s->vertid);
+	glDeleteShader(s->fragid);
+	glDeleteShader(s->geomid);
 	return FALSE;
+}
+
+
+int shader_shutdown(void){
+	//lots of TODO
+	if(shader_list){
+		int i;
+		for(i = 0; i <= shader_arraylasttaken; i++){
+			if(!shader_list[i].type) continue;
+			shader_unload(&shader_list[i]);
+			shader_remove(shader_list[i].myid);
+		}
+		free(shader_list);
+		shader_list = 0;
+	}
+	shader_ok = 0;
+	return TRUE;
 }
 
 IDLIST_CODE(shader, shader_t, shaderlist_t);

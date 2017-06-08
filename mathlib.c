@@ -2,6 +2,8 @@
 #include <math.h>
 #include "mathlib.h"
 //todo should i inline these?
+//todo should i RENAME these?
+//TODO move these to their own file
 void getBBoxPFromBBox(const vec_t * bbox, vec_t *bboxp){
 	int i;
 	for(i = 0; i < 8; i++){

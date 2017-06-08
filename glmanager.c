@@ -23,6 +23,9 @@ int msaa_maxSamples=0, msaa_maxIntSamples=0, msaa_maxColorSamples=0, msaa_maxDep
 
 
 int gl_shutdown(void){
+	printf("renderer shutting down\n");
+
+	shader_shutdown();
 	return TRUE; //successful shutdown
 }
 
