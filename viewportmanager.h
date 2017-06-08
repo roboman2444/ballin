@@ -9,7 +9,8 @@ typedef struct viewport_s {
 	float fov;
 	float near;
 	float far;
-	int viewchanged;
+	int changed;			//bit in 1s place is view changed, bit in 2s place is  projection changed
+
 	//FBO stuff here?
 	vec3_t pos;
 	vec3_t angle;
@@ -29,11 +30,13 @@ extern viewport_t viewport_default;
 
 
 
+
 #include "idlist.h"
 IDLIST_HEADER_NOHASH(viewport, viewport_t);
 
 
 int viewport_init(void);
 
+int viewport_recalc(viewport_t *v);
 
 #endif

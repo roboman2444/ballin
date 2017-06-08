@@ -47,6 +47,126 @@ const inline void recalcProjectionMatrix(viewport_t *v){
 	v->projection.m[3][2] = (-2.0 * v->near * v->far) / deltaZ;
 	v->projection.m[3][3] = 0.0;
 }
+
+//TODO figure out a faster way of doing this
+//requires the cam matrix to be up to date
+//requires the projection matrix to be up to date
+
+//IDEAS FOR FASTERING
+//pull things directly out of viewproj
+const inline void recalcFrustumBBoxP(viewport_t *v){
+	float cotangent, cotaspect;
+	cotangent = v->projection.m[1][1] /2;
+	cotaspect = v->projection.m[0][0] /2;
+	float near = v->near;
+	float far = v->far;
+	float nh = near * cotangent;
+	float nw = near * cotaspect;
+	float fh = far * cotangent;
+	float fw = far * cotaspect;
+
+	//generate something the shape and size of the frustum
+	vec_t prebboxp[24];
+	prebboxp[0] = -nw;
+	prebboxp[1] = -nh;
+	prebboxp[2] = near;
+	prebboxp[3] = nw;
+	prebboxp[4] = -nh;
+	prebboxp[5] = near;
+	prebboxp[6] = nw;
+	prebboxp[7] = nh;
+	prebboxp[8] = near;
+	prebboxp[9] = -nw;
+	prebboxp[10] = nh;
+	prebboxp[11] = near;
+
+	prebboxp[12] = -fw;
+	prebboxp[13] = -fh;
+	prebboxp[14] = far;
+	prebboxp[15] = fw;
+	prebboxp[16] = -fh;
+	prebboxp[17] = far;
+	prebboxp[18] = fw;
+	prebboxp[19] = fh;
+	prebboxp[20] = far;
+	prebboxp[21] = -fw;
+	prebboxp[22] = fh;
+	prebboxp[23] = far;
+
+
+	//this is the "slow" part
+	//now move/rotate this shape into position
+	int i;
+	for(i = 0; i < 8; i++){
+		Matrix4x4_Transform(&v->cam, &prebboxp[i*3], &v->bboxp[i*3]);
+	}
+
+}
+
+
+//requires the viewproj to already be calculated
+const inline void recalcFrustum(viewport_t *v){
+	vec_t m[16];
+	//todo cache this in the structure
+	Matrix4x4_ToArrayFloatGL(&v->viewproj, m);
+	//todo change this to use the actual matrix stuff
+	v->frustum[0].norm[0] =	m[3] - m[0];
+	v->frustum[0].norm[1] =	m[7] - m[4];
+	v->frustum[0].norm[2] =	m[11]- m[8];
+	v->frustum[0].d = 	m[15]- m[12];
+
+	v->frustum[1].norm[0] =	m[3] + m[0];
+	v->frustum[1].norm[1] =	m[7] + m[4];
+	v->frustum[1].norm[2] =	m[11]+ m[8];
+	v->frustum[1].d = 	m[15]+ m[12];
+
+	v->frustum[2].norm[0] =	m[3] - m[1];
+	v->frustum[2].norm[1] =	m[7] - m[5];
+	v->frustum[2].norm[2] =	m[11]- m[9];
+	v->frustum[2].d = 	m[15]- m[13];
+
+	v->frustum[3].norm[0] =	m[3] + m[1];
+	v->frustum[3].norm[1] =	m[7] + m[5];
+	v->frustum[3].norm[2] =	m[11]+ m[9];
+	v->frustum[3].d = 	m[15]+ m[13];
+
+	v->frustum[4].norm[0] =	m[3] - m[2];
+	v->frustum[4].norm[1] =	m[7] - m[6];
+	v->frustum[4].norm[2] =	m[11]- m[10];
+	v->frustum[4].d = 	m[15]- m[14];
+
+	v->frustum[5].norm[0] =	m[3] + m[2];
+	v->frustum[5].norm[1] =	m[7] + m[6];
+	v->frustum[5].norm[2] =	m[11]+ m[10];
+	v->frustum[5].d = 	m[15]+ m[14];
+
+}
+
+
+
+int viewport_recalc(viewport_t *v){
+	int changed = v->changed;
+	//view has changed?
+	if(changed & 1){
+		recalcViewMatrix(v);
+		Matrix4x4_CreateFromQuakeEntity(&v->cam, v->pos[0], v->pos[1], v->pos[2], v->angle[2], v->angle[1], v->angle[0], 1.0);
+		//todo figure out if something can be made faster by using a quick invert
+	}
+	//projection has changed?
+	if(changed & 2){
+		recalcProjectionMatrix(v);
+	}
+	//either have changed, gotta fix the combined things
+	if(changed){
+		Matrix4x4_Concat(&v->viewproj, &v->projection, &v->view);
+		recalcFrustum(v);
+		recalcFrustumBBoxP(v);
+	}
+	v->changed = 0;
+	return changed;
+}
+
+
 //todo make this a generic dist from plane and then inline/macro it
 vec_t distPointFromNear(viewport_t *v, vec_t *p){
 	vec_t *n = v->frustum[5].norm;
@@ -54,14 +174,31 @@ vec_t distPointFromNear(viewport_t *v, vec_t *p){
 	return dist;
 }
 
+
+//todo a seperate view frustum class? idk
 int testPointInFrustum(viewport_t *v, vec_t *p){
 	int i;
 	vec_t *n;
 	for(i = 0; i < 6; i++){
 		n = v->frustum[i].norm;
 		float dist = vec3dot(n,p) + v->frustum[i].d;
-		if(dist < 0.0) return FALSE;
+		if(dist < 0.0) return FALSE;				//behind plane
 	}
+	return TRUE;
+}
+//returns 2 if the only one it fails is the nearplane
+int testPointInFrustumNP(viewport_t *v, vec_t *p){
+	int i;
+	vec_t *n;
+	float dist;
+	for(i = 0; i < 5; i++){
+		n = v->frustum[i].norm;
+		dist = vec3dot(n,p) + v->frustum[i].d;
+		if(dist < 0.0) return FALSE;				//behind plane
+	}
+	n = v->frustum[5].norm;
+	dist = vec3dot(n,p) + v->frustum[5].d;
+	if(dist < 0.0) return 2;					//behind plane
 	return TRUE;
 }
 
@@ -73,10 +210,83 @@ int testSphereInFrustum(viewport_t *v, vec_t *p, float size){
 	for(i = 0; i < 6; i++){
 		n = v->frustum[i].norm;
 		float dist = vec3dot(n,p) + v->frustum[i].d;
-		if(dist < nsize) return FALSE;
+		if(dist < nsize) return FALSE;				//behind plane
 	}
 	return TRUE;
 }
+//returns 2 if the only one it fails is the nearplane
+int testSphereInFrustumNP(viewport_t *v, vec_t *p, float size){
+	int i;
+	vec_t *n;
+	float dist;
+	float nsize = -size;
+	for(i = 0; i < 5; i++){
+		n = v->frustum[i].norm;
+		dist = vec3dot(n,p) + v->frustum[i].d;
+		if(dist < nsize) return FALSE;				//behind plane
+	}
+	n = v->frustum[5].norm;
+	dist = vec3dot(n,p) + v->frustum[5].d;
+	if(dist < nsize) return 2;					//behind plane
+
+	return TRUE;
+}
+
+
+//todo check the IQ method of doing this
+int testBBoxPInFrustum(viewport_t *v, vec_t *points){
+	int i;
+	vec_t *n;
+	float d;
+	for(i = 0; i < 6; i++){
+		n = v->frustum[i].norm;
+		d = v->frustum[i].d;
+		int j;
+		for(j = 0; j < 8; j++){
+			vec_t *p = &points[j*3];
+			float dist = vec3dot(n,p) + d;
+			if(dist > 0.0) break;		//point in front of plane.
+		}
+		if(j ==8) return FALSE;			//this plane didnt have any points in front of it.
+	}
+	return TRUE;					//all of the planes had at least 1 point in front of it
+}
+
+//TODO nearplane versions of these two guys
+
+
+//returns 2 if the entire BBOXP fits within the frustum
+int testBBoxPInFrustumCheckWhole(viewport_t *v, vec_t *points){
+	int i;
+	vec_t *n;
+	float d;
+	int mode = 0;
+	for(i = 0; i < 6; i++){
+		n = v->frustum[i].norm;
+		d = v->frustum[i].d;
+		int j;
+		if(mode){
+			for(j = 0; j < 8; j++){
+				vec_t *p = &points[j*3];
+				float dist = vec3dot(n,p) + d;
+				if(dist > 0.0) break;		//point in front of plane.
+			}
+			if(j ==8) return FALSE;			//this plane didnt have any points in front of it.
+		} else {
+			int correct = 0;
+			for(j = 0; j < 8; j++){
+				vec_t *p = &points[j*3];
+				float dist = vec3dot(n,p) + d;
+				if(dist > 0.0) correct++;		//point behind plane
+			}
+			if(!correct) return FALSE;			//all points behind plane
+			if(correct !=8) mode = 1;			//at least one point failed. Give up trying to check whole
+		}
+	}
+	if(mode) return TRUE;					//all of the planes had at least 1 point in front of it
+	return 2;						//all planes had ALL the points in front of it
+}
+
 
 
 

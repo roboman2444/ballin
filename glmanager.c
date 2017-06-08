@@ -14,6 +14,10 @@
 #include "shadermanager.h"	//for init, register, load
 
 
+//#include "viewportmanager.h"		//uh... do i need this here?
+extern int viewport_init(void);
+
+
 //todo move into glinit and then just keep track of the lowest?
 int msaa_maxSamples=0, msaa_maxIntSamples=0, msaa_maxColorSamples=0, msaa_maxDepthSamples=0;
 
@@ -74,6 +78,7 @@ int gl_init(void){
 	vbo_init();
 	model_init();
 	shader_init();
+	viewport_init();
 	int mid = model_register("test.iqm");
 	printf("registered model id %i\n", mid);
 	model_load(model_returnById(mid));
