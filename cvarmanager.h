@@ -5,7 +5,7 @@ struct cvar_s;
 typedef void (* cvarcallback_t)(struct cvar_s *c);
 
 typedef struct cvar_s {
-	int type;
+	int type;		//todo
 	int myid;
 	char * name;
 
