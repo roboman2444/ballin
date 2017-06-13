@@ -39,6 +39,10 @@ IDLIST_HEADER(cvar, cvar_t, cvarlist_t);
 int cvar_init(void);
 
 int cvar_unload(cvar_t *c);
+
+void cvar_pset(cvar_t *c, const char * value);
+void cvar_set(const char * c, const char * value);
+
 int cvar_shutdown(void);
 
 #endif

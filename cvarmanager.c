@@ -36,6 +36,9 @@ void cvar_pset(cvar_t *c, const char * value){
 	else c->isdefault = string_testEqual(value, c->defaultstring);
 	cvar_prun(c);
 }
+void cvar_set(const char * c, const char * value){
+	cvar_pset(cvar_findByNameRPOINT(c), value);
+}
 
 int cvar_unload(cvar_t *c){
 	//todo

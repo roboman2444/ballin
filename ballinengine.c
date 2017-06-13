@@ -22,9 +22,9 @@ int shutitdown(){
 
 
 int main(int argc, char *argv[]){
-	cvar_init();
-	if(!glfw_init(800, 600, 24,1)){printf("Unable to init glfw\n"); shutitdown();}
-	if(!gl_init()){printf("Unable to init gl\n"); shutitdown();}
+	if(!cvar_init()){printf("Unable to init cvar\n"); shutitdown(); return 1;}
+	if(!glfw_init(800, 600, 24,1)){printf("Unable to init glfw\n"); shutitdown(); return 2;}
+	if(!gl_init()){printf("Unable to init gl\n"); shutitdown(); return 3;}
 	shutitdown();
 	return FALSE;
 }
