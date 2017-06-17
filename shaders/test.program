@@ -6,7 +6,8 @@ varname3:
 
 :vardata6
 varname7:vardata7
+vertexsource: ./shaders/test.names
+fragmentsource: ./shaders/test.names
 VertexSource: ./shaders/test.vert
-vertexsource: ./shaders/other.vert
 FragmentSource: ./shaders/test.frag
 //GeometrySource: ./shaders/test.geom

@@ -80,6 +80,15 @@ int shader_printShaderLogStatus(const int id){
 	return FALSE;
 }
 
+int shader_listSources(shadersource_t *s){
+	int i;
+	for(i = 0; s; s=s->next, i++){
+		printf(i ? ", %s" : "%s", s->filename);
+	}
+	printf("\n");
+	return i;
+}
+
 //todo slam some stuff
 int shader_compile(shader_t *s){
 	if(!s){
@@ -142,22 +151,27 @@ int shader_compile(shader_t *s){
 	glGetShaderiv(s->vertid, GL_COMPILE_STATUS, &status);
 	if(shader_printShaderLogStatus(s->vertid) || status == GL_FALSE){
 		//todo other stuff?
+		printf("Vertex shader FAILED to compile, sources:\t"); shader_listSources(s->vsources);
+
 		fail++;
 	}
 	glGetShaderiv(s->fragid, GL_COMPILE_STATUS, &status);
 	if(shader_printShaderLogStatus(s->fragid) || status == GL_FALSE){
 		//todo other stuff?
+		printf("Fragment shader FAILED to compile, sources:\t"); shader_listSources(s->fsources);
 		fail++;
 	}
 	if(gsc){
 		glGetShaderiv(s->geomid, GL_COMPILE_STATUS, &status);
 		if(shader_printShaderLogStatus(s->geomid) || status == GL_FALSE){
 			//todo other stuff?
+			printf("Geom shader FAILED to compile, sources:\t"); shader_listSources(s->gsources);
 			fail++;
 		}
 	}
 	if(fail){
 		printf("SHADER/compile error %i shaders failed to compile\n", fail);
+
 //		glDeleteShader(s->vertid);
 //		glDeleteShader(s->fragid);
 //		if(gsc)glDeleteShader(s->geomid);
@@ -194,6 +208,9 @@ int shader_compile(shader_t *s){
 	glGetProgramiv(s->fragid, GL_LINK_STATUS, &status);
 	if(shader_printProgramLogStatus(s->fragid) || status == GL_FALSE){
 		printf("SHADER/compile error shader program %i failed to link\n", s->programid);
+		printf("Vert sources:\t"); shader_listSources(s->vsources);
+		printf("Frag sources:\t"); shader_listSources(s->fsources);
+		if(gsc){ printf("Geom sources:\t"); shader_listSources(s->gsources); }
 		glDeleteProgram(s->programid);
 		return FALSE;
 	}
@@ -201,20 +218,25 @@ int shader_compile(shader_t *s){
 
 	glUseProgram(s->programid); //todo state
 
-	//todo get uniform locations
-
 	char texstring[16]; //little extra room
 	for(i = 0; i < 16; i++){
 		sprintf(texstring, "texture%i", i);
 		GLuint texpos = glGetUniformLocation(s->programid, texstring);
 		glUniform1i(texpos, i);
 	}
+	//temporary uniform setup
+	for(i = 0; i < 16; i++){
+		sprintf(texstring, "uniform%i", i);
+		s->uniloc[i] = glGetUniformLocation(s->programid, texstring);
+	}
 
-	//todo bind uniform blocks
-
+	//temporary uniform block setup
+	for(i = 0; i < 2; i++){
+		sprintf(texstring, "uniblock%i", i);
+		s->uniblock[i] = glGetUniformBlockIndex(s->programid, texstring);
+		if(s->uniblock[i] > -1) glUniformBlockBinding(s->programid, s->uniblock[i], i);
+	}
 	return TRUE;
-
-
 }
 
 int shader_addSource(shader_t *s, char * source, int sourcetype){

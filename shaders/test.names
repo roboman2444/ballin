@@ -1,0 +1,5 @@
+#version 330
+#define mvp uniform0
+#define texturescale uniform1
+#define posattrib attrib0
+#define tcattrib attrib2

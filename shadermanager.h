@@ -18,6 +18,11 @@ typedef struct shader_s {
 	shadersource_t * vsources;
 	shadersource_t * fsources;
 	shadersource_t * gsources;
+
+
+	//temporary
+	int uniloc[16];
+	int uniblock[2];
 } shader_t;
 
 typedef struct shaderlist_s { //todo move these into idlist?
