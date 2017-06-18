@@ -21,7 +21,7 @@ vec3_t stockv_right =	{1.0, 0.0, 0.0};
 const inline void recalcViewMatrix(viewport_t *v){
 	Matrix4x4_CreateRotate(&v->view, v->angle[2], 0.0f, 0.0f, 1.0f);
 	Matrix4x4_ConcatRotate(&v->view, v->angle[0], 1.0f, 0.0f, 0.0f);
-	Matrix4x4_CreateRotate(&v->view, v->angle[1], 0.0f, 1.0f, 0.0f);
+	Matrix4x4_ConcatRotate(&v->view, v->angle[1], 0.0f, 1.0f, 0.0f);
 	//recalc the v_ vectors
 	//TODO simd
 	//TODO shouldn't this be generated from the CAM matrix?
@@ -44,7 +44,7 @@ const inline void recalcProjectionMatrix(viewport_t *v){
 	v->projection.m[1][1] = cotangent;
 	v->projection.m[2][2] = -(v->far + v->near) / deltaZ;
 	v->projection.m[2][3] = -1.0;
-	v->projection.m[3][2] = (-2.0 * v->near * v->far) / deltaZ;
+	v->projection.m[3][2] = -2.0 * v->near * v->far / deltaZ;
 	v->projection.m[3][3] = 0.0;
 }
 

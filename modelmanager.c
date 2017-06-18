@@ -14,6 +14,9 @@
 
 #include "hashtables.h"	//for idlist
 #include "mathlib.h"	//for bbox stuff currently
+
+
+#include "glmanager.h"	//for checkglerror
 IDLIST_INTERNAL(model, model_t, modellist_t);
 
 int model_init(void){
@@ -83,14 +86,17 @@ int loadIQMMeshes(model_t *m, const struct iqmheader hdr, unsigned char * buf){
 		printf("MODEL/loadIQMMeshes error VBO failed to initialize for mesh #%i of model %s (vbo->type is %i)\n", 0, m->name, m->vbo.type);
 		return FALSE;
 	}
+	glBindVertexArray(m->vbo.vaoid);
 	for(i = 0; i < MAXATTRIBS; i++){
 		int dwidth = m->vbo.datawidth[i];
 		if(!dwidth) continue;
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo.vertsid[i]);
 		glBufferData(GL_ARRAY_BUFFER, numverts * dwidth * sizeof(GLfloat), dataptrs[i], GL_STATIC_DRAW);
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo.facesid);
-	glBufferData(GL_ARRAY_BUFFER, numfaces * 3 * sizeof(GLuint), (GLuint *) &buf[hdr.ofs_triangles], GL_STATIC_DRAW);
+	CHECKGLERROR
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->vbo.facesid);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, numfaces * 3 * sizeof(GLuint), (GLuint *) &buf[hdr.ofs_triangles], GL_STATIC_DRAW);
+	CHECKGLERROR
 	m->vbo.numverts =numverts;
 	m->vbo.numfaces =numfaces;
 	return TRUE;

@@ -8,6 +8,8 @@
 
 #include "filesys.h"	//for file manipulation
 
+#include "glmanager.h" //for glerror
+
 
 #include "hashtables.h"	//for idlist
 IDLIST_INTERNAL(shader, shader_t, shaderlist_t);
@@ -202,11 +204,10 @@ int shader_compile(shader_t *s){
 	glDeleteShader(s->vertid);
 	glDeleteShader(s->fragid);
 	if(gsc)glDeleteShader(s->geomid);
-
 	//get the status
 
-	glGetProgramiv(s->fragid, GL_LINK_STATUS, &status);
-	if(shader_printProgramLogStatus(s->fragid) || status == GL_FALSE){
+	glGetProgramiv(s->programid, GL_LINK_STATUS, &status);
+	if(shader_printProgramLogStatus(s->programid) || status == GL_FALSE){
 		printf("SHADER/compile error shader program %i failed to link\n", s->programid);
 		printf("Vert sources:\t"); shader_listSources(s->vsources);
 		printf("Frag sources:\t"); shader_listSources(s->fsources);
@@ -215,9 +216,7 @@ int shader_compile(shader_t *s){
 		return FALSE;
 	}
 
-
 	glUseProgram(s->programid); //todo state
-
 	char texstring[16]; //little extra room
 	for(i = 0; i < 16; i++){
 		sprintf(texstring, "texture%i", i);
@@ -229,13 +228,13 @@ int shader_compile(shader_t *s){
 		sprintf(texstring, "uniform%i", i);
 		s->uniloc[i] = glGetUniformLocation(s->programid, texstring);
 	}
-
 	//temporary uniform block setup
 	for(i = 0; i < 2; i++){
 		sprintf(texstring, "uniblock%i", i);
 		s->uniblock[i] = glGetUniformBlockIndex(s->programid, texstring);
 		if(s->uniblock[i] > -1) glUniformBlockBinding(s->programid, s->uniblock[i], i);
 	}
+CHECKGLERROR
 	return TRUE;
 }
 
