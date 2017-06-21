@@ -19,7 +19,7 @@ int shutitdown(){
 	//todo
 	return FALSE;
 }
-
+cvarcallback_t CVAR_test_callbacks[] = {cvar_print, 0};
 cvar_t CVAR_test = {CVAR_SAVEABLE, "test", "testing help text", "53.5"};
 
 int main(int argc, char *argv[]){
@@ -29,6 +29,13 @@ int main(int argc, char *argv[]){
 
 	cvar_t *ctest = cvar_findByNameRPOINT("test");
 	cvar_print(ctest);
+
+	CVAR_test.onchanges = CVAR_test_callbacks;
+
+	cvar_set("test", "127.1 101.0 53.2222");
+
+	cvar_unregister(ctest->myid);
+
 
 	if(!glfw_init(800, 600, 24,1)){printf("Unable to init glfw\n"); shutitdown(); return 2;}
 	if(!gl_init()){printf("Unable to init gl\n"); shutitdown(); return 3;}

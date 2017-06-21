@@ -41,7 +41,7 @@ void cvar_prun(cvar_t *c){
 void cvar_print(cvar_t *c){
 	if(!c) return;
 
-	printf("cvar_print: %i \"%s\", \"%s\", \"%s\", {%i, %f, %f:%f:%f, \"%s\"}\n", c->type, c->name, c->helptext, c->defaultstring,
+	printf("cvar_print: %i \"%s\", \"%s\", \"%s\", {%i, %f, %f:%f:%f, \"%s\"}\n", c->type, c->name, c->helptext, c->defaultvalue,
 		c->valueint, c->valuefloat,
 		c->valuevector[0], c->valuevector[1], c->valuevector[2],
 		c->value);
@@ -61,8 +61,8 @@ void cvar_pset(cvar_t *c, const char * value){
 	c->valueint = (int)vf;
 	c->valuefloat = vf;
 	string_toVec(value, c->valuevector, 3);
-	if(!value == !c->defaultstring) c->isdefault = FALSE;
-	else c->isdefault = string_testEqual(value, c->defaultstring);
+	if(!value == !c->defaultvalue) c->isdefault = FALSE;
+	else c->isdefault = string_testEqual(value, c->defaultvalue);
 	cvar_prun(c);
 }
 void cvar_set(const char * c, const char * value){
@@ -132,27 +132,38 @@ void cvar_pruneList(void){
 }
 
 //TODO
-/*
-int _CONCAT(NAME, _remove)(const int id){
+//a modified remove
+int cvar_unregister(const int id){
 	int index = (id & 0xFFFF);
-	TYPE * ret = &_CONCAT(NAME, _list)[index];
+	cvar_t * ret = cvar_list[index];
 	if(ret->myid != id) return FALSE;
-	_CONCAT(NAME, _count)--;
-	if(ret->name){
-		hash_removeFromTable(ret->name, id, _CONCAT(NAME, _hashtable));
-		free(ret->name);
+	//todo should i check the registered flag here?
+	cvar_count--;
+	if(ret->name) hash_removeFromTable(ret->name, id, cvar_hashtable);
+	if(ret->type & CVAR_FREEONCHANGES){
+		if(ret->onchanges) free(ret->onchanges);
+		ret->onchanges= 0;
 	}
-	memset(ret, 0, sizeof(TYPE));//todo just test if setting type/id to 0 is good enough
-	if(index < _CONCAT(NAME, _arrayfirstopen)) _CONCAT(NAME, _arrayfirstopen) = index;
-	for(; _CONCAT(NAME, _arraylasttaken) > 0 && !_CONCAT(NAME, _list)[_CONCAT(NAME, _arraylasttaken)].myid; _CONCAT(NAME, _arraylasttaken)--);
+	if(ret->type & CVAR_FREEABLE){
+		if(ret->name)	 	free(ret->name);
+		if(ret->helptext)	free(ret->helptext);
+		if(ret->defaultvalue)	free(ret->defaultvalue);
+		ret->name = ret->helptext = ret->defaultvalue = 0;
+	}
+
+	cvar_list[index] = 0;
+	if(index < cvar_arrayfirstopen) cvar_arrayfirstopen = index;
+	for(; cvar_arraylasttaken > 0 && !cvar_list[cvar_arraylasttaken]; cvar_arraylasttaken--);
+	ret->type &= (~CVAR_REGISTERED);
 	return TRUE;
 }
-*/
+
 int cvar_shutdown(void){
 	int i = 0;
 	if(cvar_list){
 		for(i = 0; i <= cvar_arraylasttaken; i++){
 			if(!cvar_list[i]->myid)continue;
+			cvar_unregister(cvar_list[i]->myid);
 			//TODO
 //			_CONCAT(NAME, _unload)(&_CONCAT(NAME, _list)[i]);
 //			_CONCAT(NAME, _remove)(_CONCAT(NAME, _list)[i].myid);
@@ -170,26 +181,26 @@ int cvar_shutdown(void){
 }
 //aka cvar_addRINT
 int cvar_register(cvar_t * inst){
-	if(!inst || !inst->name) return FALSE;
+	if(!inst || !inst->name || inst->type & CVAR_REGISTERED) return FALSE;
 	cvar_count++;
 	cvar_roll++;
 	if(cvar_roll > 65535) cvar_roll = 1;//no possible way for IDs to be 0 now
-	for(; cvar_arrayfirstopen < cvar_arraysize && cvar_list[cvar_arrayfirstopen]->myid; cvar_arrayfirstopen++);
+	for(; cvar_arrayfirstopen < cvar_arraysize && cvar_list[cvar_arrayfirstopen]; cvar_arrayfirstopen++);
 	if(cvar_arrayfirstopen == cvar_arraysize){
 		cvar_arraysize++;
 		cvar_list = realloc(cvar_list, cvar_arraysize * sizeof(cvar_t*));
 	}
 	cvar_list[cvar_arrayfirstopen] = inst;
 	int returnid = (cvar_roll << 16) | cvar_arrayfirstopen;
-	cvar_list[cvar_arrayfirstopen]->myid = returnid;
+	inst->myid = returnid;
 
 	hash_addToTable(inst->name, returnid, cvar_hashtable);
 	if(cvar_arraylasttaken < cvar_arrayfirstopen) cvar_arraylasttaken = cvar_arrayfirstopen;
 
 	inst->type |= CVAR_REGISTERED;
 
-	if(inst->defaultstring){
-		cvar_pset(inst, inst->defaultstring);
+	if(inst->defaultvalue){
+		cvar_pset(inst, inst->defaultvalue);
 	}
 
 	return returnid;

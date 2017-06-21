@@ -9,7 +9,7 @@ typedef struct cvar_s {
 
 	char * name;
 	char * helptext; //maybe
-	char * defaultstring;
+	char * defaultvalue;
 
 //	int numcallbacks;
 //either NULL or NULL TERMINATED
@@ -35,9 +35,10 @@ typedef struct cvarlist_s {
 } cvarlist_t;
 
 
-#define CVAR_REGISTERED	1
-#define CVAR_FREEABLE	2
-#define CVAR_SAVEABLE	4 //todo
+#define CVAR_REGISTERED		1
+#define CVAR_FREEABLE		2
+#define CVAR_FREEONCHANGES	4
+#define CVAR_SAVEABLE		8 //todo
 
 //#include "idlist.h"
 //cant use idlist for this because of the **
@@ -57,6 +58,7 @@ int cvar_init(void);
 
 
 int cvar_register(cvar_t *c);
+int cvar_unregister(const int id);
 void cvar_print(cvar_t *c);
 //todo
 int cvar_unload(cvar_t *c);
