@@ -28,7 +28,7 @@ typedef struct cvar_s {
 
 } cvar_t;
 
-
+//might get rid of this at some point
 typedef struct cvarlist_s {
 	cvar_t **list;
 	int count;

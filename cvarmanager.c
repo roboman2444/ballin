@@ -87,37 +87,6 @@ int cvar_findByNameRINT(const char * name){
 }
 
 
-/*
-TYPELIST _CONCAT(NAME, _findAllByNameRPOINT)(const char * name){
-	TYPELIST ret = {0};
-	int hash = hash_get(name);
-	hashbucket_t * hb = &_CONCAT(NAME, _hashtable)[hash];
-	if(!hb->name) return ret;
-	for(; hb; hb = hb->next){
-		if(string_testEqual(hb->name, name)){
-		ret.count++;
-		ret.list = realloc(ret.list, ret.count * sizeof(cvar_t *));
-		ret.list[ret.count-1] = _CONCAT(NAME, _returnById)(hb->id);
-		}
-	}
-	return ret;
-}
-
-idlist_t _CONCAT(NAME, _findAllByNameRINT)(const char * name){
-	idlist_t ret = {0};
-	int hash = hash_get(name);
-	hashbucket_t * hb = &_CONCAT(NAME, _hashtable)[hash];
-	if(!hb->name) return ret;
-	for(; hb; hb = hb->next){
-		if(string_testEqual(hb->name, name)){
-		ret.count++;
-		ret.list = realloc(ret.list, ret.count * sizeof(int));
-		ret.list[ret.count-1] = hb->id;
-		}
-	}
-	return ret;
-}
-*/
 cvar_t * cvar_returnById(const int id){
         int index = (id & 0xFFFF);
         cvar_t * ret = cvar_list[index];
