@@ -8,6 +8,11 @@ typedef struct idlist_s {
 	unsigned int count;
 } idlist_t;
 
+typedef struct idlinked_s {
+	int id;
+	struct idlinked_s *next;
+} idlinked_t;
+
 
 #define _CONCET(x,y) x ## y
 #define _CONCAT(x,y) _CONCET(x, y) //need that crazy redirection
@@ -77,7 +82,8 @@ memset(_CONCAT(NAME, _hashtable), 0, MAXHASHBUCKETS * sizeof(hashbucket_t));\
 #define IDLIST_CODE(NAME, TYPE, TYPELIST)\
 \
 TYPE * _CONCAT(NAME, _findByNameRPOINT)(const char * name){\
-	return _CONCAT(NAME, _returnById)(hash_findByNameRINT(name, _CONCAT(NAME, _hashtable)));\
+	int id = hash_findByNameRINT(name, _CONCAT(NAME, _hashtable));\
+	return id ? _CONCAT(NAME, _returnById)(id) : 0;/*todo change this at some point to check in the returnid?*/\
 }\
 \
 int _CONCAT(NAME, _findByNameRINT)(const char * name){\
@@ -115,7 +121,7 @@ idlist_t _CONCAT(NAME, _findAllByNameRINT)(const char * name){\
 }\
 \
 TYPE * _CONCAT(NAME, _returnById)(const int id){\
-        int index = (id & 0xFFFF);\
+        int index = (id & 0xFFFF);/*todo should i check to make sure id isnt 0?*/\
         TYPE * ret = &_CONCAT(NAME, _list)[index];\
         if(ret->myid == id) return ret;\
         return FALSE;\

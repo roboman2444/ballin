@@ -4,18 +4,26 @@
 #include "globaldefs.h"
 #include "vertexattribs.h"
 #include "shadermanager.h"
-#include "stringlib.h"	//for idlist, stringTestEqual
+#include "stringlib.h"		//for idlist, stringTestEqual
 
-#include "filesys.h"	//for file manipulation
+#include "filesys.h"		//for file manipulation
 
-#include "glmanager.h" //for glerror
+#include "glmanager.h"		//for glerror
 
 
-#include "hashtables.h"	//for idlist
+#include "hashtables.h"		//for idlist
+
+#include "cvarmanager.h"	//for cvars
 IDLIST_INTERNAL(shader, shader_t, shaderlist_t);
+
+cvarcallback_t CVAR_shaderversionstring_callbacks[] = {cvar_forceNewlineEnd, 0};
+
+cvar_t CVAR_shaderversionstring = {CVAR_SAVEABLE, "shaderversionstring", "glsl version that is put at the top of every shader compiled", "#version 330", CVAR_shaderversionstring_callbacks};
 
 int shader_init(void){
 	IDLIST_INIT(shader, shader_t, shaderlist_t);
+	cvar_register(&CVAR_shaderversionstring);
+	cvar_print(&CVAR_shaderversionstring);
 	return TRUE;
 }
 //returns ID of shader program (either added or already there)
@@ -30,6 +38,20 @@ int shader_register(char * name){
 }
 
 
+int shader_deleteCvars(shader_t *s){
+
+	shadercvar_t *c = s->cvars;
+	int i;
+	for(i = 0; c; i++){
+		//todo remove from the cvar->shader list
+		if(c->sbuf) free(c->sbuf);
+		if(c->name) free(c->name);
+		shadercvar_t *olds = c;
+		c = c->next;
+		free(olds);
+	}
+	return i;
+}
 int shader_deleteSources(shadersource_t *s){
 	int i;
 	for(i = 0; s; i++){
@@ -63,7 +85,7 @@ int shader_printProgramLogStatus(const int id){
 	if(blen > 1){
 		GLchar * log = (GLchar *) malloc(blen);
 		glGetProgramInfoLog(id, blen, 0, log);
-		printf("Program %i log %s \n", id, log);
+		printf("Program %i log\n%s\n", id, log);
 		free(log);
 		return blen;
 	}
@@ -75,7 +97,19 @@ int shader_printShaderLogStatus(const int id){
 	if(blen > 1){
 		GLchar * log = (GLchar *) malloc(blen);
 		glGetShaderInfoLog(id, blen, 0, log);
-		printf("Shader %i log %s \n", id, log);
+		printf("Shader %i log\n%s\n", id, log);
+		free(log);
+		return blen;
+	}
+	return FALSE;
+}
+int shader_printShaderSourceStatus(const int id){
+	GLint blen = 0;
+	glGetShaderiv(id, GL_SHADER_SOURCE_LENGTH, &blen);
+	if(blen > 1){
+		GLchar * log = (GLchar *) malloc(blen);
+		glGetShaderSource(id, blen, 0, log);
+		printf("Shader %i source\n%s\n", id, log);
 		free(log);
 		return blen;
 	}
@@ -104,10 +138,26 @@ int shader_compile(shader_t *s){
 	GLsizei vsc = 0;
 	GLsizei fsc = 0;
 	GLsizei gsc = 0;
+	GLsizei csc = 0;//cvar
 	shadersource_t * ss;
 	for(ss = s->vsources; ss; ss = ss->next) if(ss->data) vsc++;
 	for(ss = s->fsources; ss; ss = ss->next) if(ss->data) fsc++;
 	for(ss = s->gsources; ss; ss = ss->next) if(ss->data) gsc++;
+
+	shadercvar_t *sc;
+	for(sc = s->cvars; sc; sc = sc->next){
+		cvar_t *cv;
+		if(sc->name && (cv = cvar_returnById(sc->id)) && cv->value){
+			//if buff hasnt been updated, update it
+			if(!sc->sbuf){
+				size_t sizzie  = strlen(sc->name) + strlen(cv->value) + 12;
+				sc->sbuf = malloc(sizzie);
+				sprintf(sc->sbuf, "\n#define %s %s\n", sc->name, cv->value);
+			}
+			csc++;
+		//todo double check this (also set a flag to later go through the list and "clean up"
+		} else if(sc->sbuf){ free(sc->sbuf); sc->sbuf = 0; } //just in case the cvar was removed and i forgot about it
+	}
 
 	if(s->vsources && !vsc){
 		printf("SHADER/compile error vertex shader sources exist, but none were loaded!\n");
@@ -119,27 +169,41 @@ int shader_compile(shader_t *s){
 		printf("SHADER/compile error geometry shader sources exist, but none were loaded!\n");
 	}
 	if(!s->vsources || !s->fsources || !vsc || !fsc) return FALSE;
+
+
 	//generate buffers, load shaders
 	int i;
 	if(vsc){
 		s->vertid = glCreateShader(GL_VERTEX_SHADER);
-		const GLchar ** vstring = malloc(vsc * sizeof(GLchar *));
-		for(i=0, ss = s->vsources; ss && i < vsc; ss = ss->next) if(ss->data) vstring[i++] = ss->data;
-		glShaderSource(s->vertid, vsc, vstring, NULL);
+		int lc = vsc+csc+1; //shader sources + cvars + versionstring
+		const GLchar ** vstring = malloc(lc * sizeof(GLchar *));
+		i = 0;
+		if(CVAR_shaderversionstring.value)vstring[i++] = CVAR_shaderversionstring.value;
+		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) vstring[i++] = sc->sbuf;
+		for(ss = s->vsources; ss && i < lc; ss = ss->next) if(ss->data) vstring[i++] = ss->data;
+		glShaderSource(s->vertid, i, vstring, NULL);
 		if(vstring) free(vstring);
 	}
 	if(fsc){
 		s->fragid = glCreateShader(GL_FRAGMENT_SHADER);
-		const GLchar ** fstring = malloc(fsc * sizeof(GLchar *));
-		for(i=0, ss = s->fsources; ss && i < fsc; ss = ss->next) if(ss->data) fstring[i++] = ss->data;
-		glShaderSource(s->fragid, fsc, fstring, NULL);
+		int lc = fsc+csc+1; //shader sources + cvars + versionstring
+		const GLchar ** fstring = malloc(lc * sizeof(GLchar *));
+		i = 0;
+		if(CVAR_shaderversionstring.value)fstring[i++] = CVAR_shaderversionstring.value;
+		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) fstring[i++] = sc->sbuf;
+		for(ss = s->fsources; ss && i < lc; ss = ss->next) if(ss->data) fstring[i++] = ss->data;
+		glShaderSource(s->fragid, i, fstring, NULL);
 		if(fstring) free(fstring);
 	}
 	if(gsc){
 		s->geomid = glCreateShader(GL_GEOMETRY_SHADER);
-		const GLchar ** gstring = malloc(gsc * sizeof(GLchar *));
-		for(i=0, ss = s->gsources; ss && i < gsc; ss = ss->next) if(ss->data) gstring[i++] = ss->data;
-		glShaderSource(s->geomid, gsc, gstring, NULL);
+		int lc = gsc+csc+1; //shader sources + cvars + versionstring
+		const GLchar ** gstring = malloc(lc * sizeof(GLchar *));
+		i = 0;
+		if(CVAR_shaderversionstring.value)gstring[i++] = CVAR_shaderversionstring.value;
+		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) gstring[i++] = sc->sbuf;
+		for(ss = s->gsources; ss && i < lc; ss = ss->next) if(ss->data) gstring[i++] = ss->data;
+		glShaderSource(s->geomid, i, gstring, NULL);
 		if(gstring) free(gstring);
 	}
 	//shader sources should be GOOD now
@@ -154,6 +218,7 @@ int shader_compile(shader_t *s){
 	if(shader_printShaderLogStatus(s->vertid) || status == GL_FALSE){
 		//todo other stuff?
 		printf("Vertex shader FAILED to compile, sources:\t"); shader_listSources(s->vsources);
+		shader_printShaderSourceStatus(s->vertid);
 
 		fail++;
 	}
@@ -161,6 +226,7 @@ int shader_compile(shader_t *s){
 	if(shader_printShaderLogStatus(s->fragid) || status == GL_FALSE){
 		//todo other stuff?
 		printf("Fragment shader FAILED to compile, sources:\t"); shader_listSources(s->fsources);
+		shader_printShaderSourceStatus(s->fragid);
 		fail++;
 	}
 	if(gsc){
@@ -168,6 +234,8 @@ int shader_compile(shader_t *s){
 		if(shader_printShaderLogStatus(s->geomid) || status == GL_FALSE){
 			//todo other stuff?
 			printf("Geom shader FAILED to compile, sources:\t"); shader_listSources(s->gsources);
+			shader_printShaderSourceStatus(s->geomid);
+
 			fail++;
 		}
 	}
@@ -276,6 +344,110 @@ int shader_addSource(shader_t *s, char * source, int sourcetype){
 	return TRUE;
 }
 
+void shader_cvarChange(cvar_t *c){
+	//look up shaders this cvar effects in the cvar->shaders list (based on cvar id), recompile
+	//TODO implement with a hashtable! (specifically idbucket)
+
+	//currently does a linear search through all the shaders to find ones that use the cvar (gross and slow)
+	//todo change to a "hashtable" of cvar->shaders
+
+	int i;
+	for(i = 0; i <= shader_arraylasttaken; i++){
+		shader_t *s = &shader_list[i];
+		shadercvar_t *sc;
+		//check to make shader has already been compiled
+		if(!s->myid || s->type != 4) continue;
+		for(sc = s->cvars; sc ; sc = sc->next) if(sc->id == c->myid) break;
+		//found it, force an update of its sbuf and set the shader to be recompiled
+		if(sc){
+			if(sc->sbuf) free(sc->sbuf);
+			sc->sbuf = 0;
+			s->type = 3;
+		}
+	}
+}
+
+
+cvarcallback_t shaderchanges[] = {shader_cvarChange, 0};
+
+//todo figure out if this should be per-shader or per-program (currently per-program, applied to all shaders)
+//todo figure out onchanges behavior... do i add on if there already exists? Do i need to realloc?
+int shader_addCvar(shader_t *s, char * c){
+	//cvar cvar_name shader_name type (default)
+	//str will be cvar_name shader_name type (default)
+
+	char *strs[4] = {0, 0, 0, 0};
+
+	//todo make this little parsing code a helper function with any number of fields
+
+	//"preprocess"... find all the delims, set pointers to them, set them to null
+	int numfields;
+	strs[0] = c;
+	for(numfields = 1; numfields < 4; numfields++){
+		char * delim = strchr(c, ',');
+		if(!delim) break;
+		c = strs[numfields] = delim+1;
+		*delim = 0;
+	}
+
+	int i;
+	for(i = 0; i < numfields; i++){
+		//trim whitespace at beginning
+		while(*(strs[i]) &&  ISWHITESPACE(*(strs[i]))) strs[i]++;
+		//find end
+		char *e = strlen(strs[i]) + strs[i];
+		//trim whitespace at end
+		while(e >= strs[i] && ISWHITESPACE(*e)) *e--=0;
+	}
+	printf("parsed %i words: %s %s %s %s\n", numfields, strs[0], strs[1], strs[2], strs[3]);
+	if(numfields < 2){
+		printf("SHADER/addCvar error only parsed %i words in the cvar data, my syntax is \"cvar cvar_name shader_name (type) (default)\"\n", i);
+		return 0;
+	}
+	if(numfields < 4 || strlen(strs[3]) < 1)strs[3] = "0";
+	//TODO, stuff like uniform or not, saveable, etc
+	if(numfields < 3 || strlen(strs[2]) < 1 )strs[2] = "define";
+
+	//check if cvar exists
+	cvar_t *cv = cvar_findByNameRPOINT(strs[0]);
+
+	//add it if not there
+	if(!cv){
+		cv = malloc(sizeof(cvar_t));
+		cv->type = CVAR_SAVEABLE | CVAR_FREEABLE ; // CVAR_FREEONCHANGES;
+		cv->name = strdup(strs[0]);
+		cv->defaultvalue = strdup(strs[3]);
+		cv->helptext = strdup("shader system cvar TODO figure out this helptext");
+		cv->myid = 0;
+		cv->value = 0;
+		cv->onchanges = 0;
+		cvar_register(cv);
+		//i need to set the onchanges AFTER registering it, since register will call the onchanges and i havent set that stuff up yet
+		//todo figure this out for good
+		cv->onchanges = shaderchanges;
+	}
+	cvar_print(cv);
+
+	//add cvar/shader to cvar->shader list
+	//TODO
+	//add cvar link to shader cvar list
+
+
+	shadercvar_t **sptr = &s->cvars;
+
+	//walk linked list till end
+	while(*sptr) sptr = &((*sptr)->next); //ugly lol
+
+	shadercvar_t * k = malloc(sizeof(shadercvar_t));
+	k->name = strdup(strs[1]);
+	k->sbuf = 0;
+	k->id = cv->myid;
+	k->next = 0;
+	*sptr = k;
+
+	return i;
+}
+
 int shader_parseProgramFile(shader_t *s){
 			if(!s->name){
 				printf("SHADER/parseProgramFile error shader doesnt have a name?\n");
@@ -316,6 +488,7 @@ int shader_parseProgramFile(shader_t *s){
 					if(string_testEqualCI(varname, "VertexSource"))		shader_addSource(s, vardata, 1);
 					else if(string_testEqualCI(varname, "FragmentSource"))	shader_addSource(s, vardata, 2);
 					else if(string_testEqualCI(varname, "GeometrySource"))	shader_addSource(s, vardata, 3);
+					else if(string_testEqualCI(varname, "Cvar"))		shader_addCvar(s, vardata);
 				}
 			}
 			file_close(&f);
@@ -342,12 +515,13 @@ int shader_load(shader_t *s){
 	}
 }
 
-
 int shader_unload(shader_t *s){
 	//free shader sources (and data)
 	if(s->vsources)shader_deleteSources(s->vsources);
 	if(s->fsources)shader_deleteSources(s->fsources);
 	if(s->gsources)shader_deleteSources(s->gsources);
+	//free cvars and remove cvar->shader match (but dont remove cvars from cvar system, they might be used by other shaders)
+	if(s->cvars)shader_deleteCvars(s);
 	s->vsources = s->fsources = s->gsources = 0;
 	//todo check before deleting
 	glDeleteProgram(s->programid);

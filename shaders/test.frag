@@ -7,5 +7,5 @@ uniform sampler2D texture0;
 out vec4 fragData0;
 void main(){
 //	fragData0 = texture(texture0, uniform1 * tc);
-	fragData0 = vec4(abs(norm), 1.0);
+	fragData0 = vec4(abs(norm) * cvarcol, 1.0);
 }

@@ -18,7 +18,8 @@ vec3_t stockv_forward =	{0.0, 0.0, 1.0};
 vec3_t stockv_up =	{0.0, 1.0, 0.0};
 vec3_t stockv_right =	{1.0, 0.0, 0.0};
 
-const inline void recalcViewMatrix(viewport_t *v){
+//const inline void recalcViewMatrix(viewport_t *v){
+void recalcViewMatrix(viewport_t *v){
 	Matrix4x4_CreateRotate(&v->view, v->angle[2], 0.0f, 0.0f, 1.0f);
 	Matrix4x4_ConcatRotate(&v->view, v->angle[0], 1.0f, 0.0f, 0.0f);
 	Matrix4x4_ConcatRotate(&v->view, v->angle[1], 0.0f, 1.0f, 0.0f);
@@ -31,7 +32,8 @@ const inline void recalcViewMatrix(viewport_t *v){
 	Matrix4x4_ConcatTranslate(&v->view, -v->pos[0], -v->pos[1], -v->pos[2]);
 }
 
-const inline void recalcProjectionMatrix(viewport_t *v){
+//const inline void recalcProjectionMatrix(viewport_t *v){
+void recalcProjectionMatrix(viewport_t *v){
 	double sine, cotangent, deltaZ;
 	double radians = v->fov / 2.0 * M_PI / 180.0;
 	deltaZ = v->far - v->near;
@@ -54,7 +56,8 @@ const inline void recalcProjectionMatrix(viewport_t *v){
 
 //IDEAS FOR FASTERING
 //pull things directly out of viewproj
-const inline void recalcFrustumBBoxP(viewport_t *v){
+//const inline void recalcFrustumBBoxP(viewport_t *v){
+void recalcFrustumBBoxP(viewport_t *v){
 	float cotangent, cotaspect;
 	cotangent = v->projection.m[1][1] /2;
 	cotaspect = v->projection.m[0][0] /2;
@@ -105,7 +108,8 @@ const inline void recalcFrustumBBoxP(viewport_t *v){
 
 
 //requires the viewproj to already be calculated
-const inline void recalcFrustum(viewport_t *v){
+//const inline void recalcFrustum(viewport_t *v){
+void recalcFrustum(viewport_t *v){
 	vec_t m[16];
 	//todo cache this in the structure
 	Matrix4x4_ToArrayFloatGL(&v->viewproj, m);

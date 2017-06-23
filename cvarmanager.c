@@ -79,7 +79,8 @@ int cvar_unload(cvar_t *c){
 }
 
 cvar_t * cvar_findByNameRPOINT(const char * name){
-	return cvar_returnById(hash_findByNameRINT(name, cvar_hashtable));
+	int id = hash_findByNameRINT(name, cvar_hashtable);
+	return id ? cvar_returnById(id) : 0;
 }
 
 int cvar_findByNameRINT(const char * name){
@@ -88,7 +89,9 @@ int cvar_findByNameRINT(const char * name){
 
 
 cvar_t * cvar_returnById(const int id){
+//	if(!id) return FALSE;
         int index = (id & 0xFFFF);
+	printf("index is %i, id is %i\n", index, id);
         cvar_t * ret = cvar_list[index];
         if(ret->myid == id) return ret;
         return FALSE;
@@ -174,3 +177,22 @@ int cvar_register(cvar_t * inst){
 
 	return returnid;
 }//dont need rpoint because you already got rpoint lol
+
+
+
+
+//todo if i add any more of these ease of use ones, put them in a seperate file, like "cvarcallbacks.c"
+//ease of use callback to automatically add a newline to the end of a cvar if it does not exist
+//DOES NOT CALL PSET
+//does not mess with the default flag, so the newline modified one will still be default
+void cvar_forceNewlineEnd(cvar_t *s){
+	if(!s || !s->value) return;
+	size_t l = strlen(s->value);
+	if(!l || s->value[l-1] == '\n') return;
+	char * newwy = malloc(l+2);
+	strcpy(newwy, s->value);
+	newwy[l] = '\n';
+	newwy[l+1] = 0;
+	free(s->value);
+	s->value = newwy;
+}

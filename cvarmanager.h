@@ -70,5 +70,7 @@ void cvar_set(const char * c, const char * value);
 int cvar_shutdown(void);
 
 
+void cvar_forceNewlineEnd(cvar_t *c);
+
 
 #endif

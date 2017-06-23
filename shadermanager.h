@@ -3,9 +3,17 @@
 typedef struct shadersource_s {
 	char * filename;
 	char * data;
-	int length; //todo
+	int length;
 	struct shadersource_s * next; //linked listy
 }shadersource_t;
+
+typedef struct shadercvar_s {
+	int id; //cvar id
+	//todo type
+	char * name;
+	char * sbuf;
+	struct shadercvar_s *next;
+} shadercvar_t;
 
 typedef struct shader_s {
 	int type;//todo figure out types
@@ -19,6 +27,7 @@ typedef struct shader_s {
 	shadersource_t * fsources;
 	shadersource_t * gsources;
 
+	shadercvar_t *cvars;
 
 	//temporary
 	int uniloc[16];

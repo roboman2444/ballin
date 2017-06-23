@@ -7,6 +7,13 @@ typedef struct hashbucket_s {
 	struct hashbucket_s * next;
 } hashbucket_t;
 
+//todo actually implement and use this in the shader cvar stuff
+typedef struct idbucket_s {
+	int *key;
+	int id;
+	struct idbucket_s * next;
+} idbucket_t;
+
 int hash_get(const char * string);
 int hash_getCI(const char * string);
 int hash_addToTable(const char * name, int id, hashbucket_t * ht);

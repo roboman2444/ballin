@@ -68,6 +68,8 @@ int string_testEqualNCI(const char * one, const char * two, const unsigned int n
 	return TRUE;
 }
 
+
+//todo figure out how to parse it out of "vec3(blah,blah,blah)"
 unsigned int string_toVec(const char *s, vec_t *v, const unsigned int maxdem){
 	unsigned int i;
 	for(i = 0; i < maxdem; i++){
