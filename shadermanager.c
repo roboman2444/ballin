@@ -56,6 +56,7 @@ int shader_deleteSources(shadersource_t *s){
 	int i;
 	for(i = 0; s; i++){
 		if(s->filename) free(s->filename);
+		if(s->helperstring) free(s->helperstring);
 		if(s->data) free(s->data);
 		shadersource_t *olds = s;
 		s = s->next;
@@ -71,6 +72,9 @@ int shader_loadSources(shadersource_t *s){
 			printf("SHADER/loadSources error shader source without a filename! (index %i)\n", i);
 			continue;
 		}
+		if(s->helperstring) free(s->helperstring);
+		s->helperstring = malloc(10 + strlen(s->filename));
+		sprintf(s->helperstring, "\n//FILE:%s\n", s->filename);
 		if(s->data) free(s->data); //todo maybe just keep it?
 		s->length = file_loadString(s->filename, &s->data);
 		if(!s->length) printf("SHADER/loadSources error shader source %s either doesnt exist or is empty! (index %i)\n", s->filename, i);
@@ -171,38 +175,47 @@ int shader_compile(shader_t *s){
 	if(!s->vsources || !s->fsources || !vsc || !fsc) return FALSE;
 
 
+	char * intermediatestrings[] = {"//Cvars\n", "//Sourcefiles\n"};
+
+
 	//generate buffers, load shaders
 	int i;
 	if(vsc){
 		s->vertid = glCreateShader(GL_VERTEX_SHADER);
-		int lc = vsc+csc+1; //shader sources + cvars + versionstring
+		int lc = vsc+csc+1+2+vsc; //shader sources + cvars + versionstring + intermediate strings + helper strings
 		const GLchar ** vstring = malloc(lc * sizeof(GLchar *));
 		i = 0;
 		if(CVAR_shaderversionstring.value)vstring[i++] = CVAR_shaderversionstring.value;
+		vstring[i++] = intermediatestrings[0];
 		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) vstring[i++] = sc->sbuf;
-		for(ss = s->vsources; ss && i < lc; ss = ss->next) if(ss->data) vstring[i++] = ss->data;
+		vstring[i++] = intermediatestrings[1];
+		for(ss = s->vsources; ss && i < lc; ss = ss->next) if(ss->data){vstring[i++] = ss->helperstring; vstring[i++] = ss->data;}
 		glShaderSource(s->vertid, i, vstring, NULL);
 		if(vstring) free(vstring);
 	}
 	if(fsc){
 		s->fragid = glCreateShader(GL_FRAGMENT_SHADER);
-		int lc = fsc+csc+1; //shader sources + cvars + versionstring
+		int lc = fsc+csc+1+2+fsc; //shader sources + cvars + versionstring + intermediate strings + helper strings
 		const GLchar ** fstring = malloc(lc * sizeof(GLchar *));
 		i = 0;
 		if(CVAR_shaderversionstring.value)fstring[i++] = CVAR_shaderversionstring.value;
+		fstring[i++] = intermediatestrings[0];
 		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) fstring[i++] = sc->sbuf;
-		for(ss = s->fsources; ss && i < lc; ss = ss->next) if(ss->data) fstring[i++] = ss->data;
+		fstring[i++] = intermediatestrings[1];
+		for(ss = s->fsources; ss && i < lc; ss = ss->next) if(ss->data){fstring[i++] = ss->helperstring; fstring[i++] = ss->data;}
 		glShaderSource(s->fragid, i, fstring, NULL);
 		if(fstring) free(fstring);
 	}
 	if(gsc){
 		s->geomid = glCreateShader(GL_GEOMETRY_SHADER);
-		int lc = gsc+csc+1; //shader sources + cvars + versionstring
+		int lc = gsc+csc+1+2+gsc; //shader sources + cvars + versionstring + intermediate strings + helper strings
 		const GLchar ** gstring = malloc(lc * sizeof(GLchar *));
 		i = 0;
 		if(CVAR_shaderversionstring.value)gstring[i++] = CVAR_shaderversionstring.value;
+		gstring[i++] = intermediatestrings[0];
 		for(sc = s->cvars;    sc && i < lc; sc = sc->next) if(sc->sbuf) gstring[i++] = sc->sbuf;
-		for(ss = s->gsources; ss && i < lc; ss = ss->next) if(ss->data) gstring[i++] = ss->data;
+		gstring[i++] = intermediatestrings[1];
+		for(ss = s->gsources; ss && i < lc; ss = ss->next) if(ss->data){gstring[i++] = ss->helperstring; gstring[i++] = ss->data;}
 		glShaderSource(s->geomid, i, gstring, NULL);
 		if(gstring) free(gstring);
 	}
@@ -337,6 +350,7 @@ int shader_addSource(shader_t *s, char * source, int sourcetype){
 
 	shadersource_t * k = malloc(sizeof(shadersource_t));
 	k->filename = strdup(source);
+	k->helperstring = 0;
 	k->data = 0;
 	k->length = 0;
 	k->next = 0;

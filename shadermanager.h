@@ -3,6 +3,7 @@
 typedef struct shadersource_s {
 	char * filename;
 	char * data;
+	char * helperstring;
 	int length;
 	struct shadersource_s * next; //linked listy
 }shadersource_t;
