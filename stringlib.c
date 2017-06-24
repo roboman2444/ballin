@@ -94,3 +94,78 @@ unsigned int string_countWords(const char *s){
 	}
 	return i;
 }
+//DESTRUCTIVE
+char * string_trim(char * in){
+		//trim whitespace at beginning
+		while(*in && ISWHITESPACE(*in)) in++;
+		//find end
+		char *e = strlen(in) + in;
+		//trim whitespace from end
+		while(e >= in && ISWHITESPACE(*e)) *e--=0;
+		return in;
+}
+//DESTRUCTIVE
+//returns 0 if string is entirely whitespace
+char * string_trimD(char * in){
+		//trim whitespace at beginning
+		while(*in && ISWHITESPACE(*in)) in++;
+		//find end
+		char *e = strlen(in) + in;
+		//trim whitespace from end
+		while(e >= in && ISWHITESPACE(*e)) *e--=0;
+		return e < in ? 0 : in;
+}
+
+
+
+//TODO functions that dont fuck with the origional string
+//TODO splits that dynamically allocate more space and dont have a maxnum
+
+//DESTRUCTIVE. fucks with the origional string
+int string_splitN(char *s, const char delim, char ** outstring, int num){
+	if(num <1)return 0; //why bother?
+	int ret;
+	outstring[0] = s;
+	//preprocess, find start of each word and null the delim
+	for(ret = 1; ret < num; ret++){
+		char * d = strchr(s, delim);
+		if(!d) break;
+		s = outstring[ret] = d+1;
+		*d = 0;
+	}
+	int i;
+	for(i = 0; i < ret; i++){
+		/*
+		//trim whitespace at beginning
+		while(*(outstring[i]) && ISWHITESPACE(*(outstring[i]))) outstring[i]++;
+		//find end
+		char *e = strlen(outstring[i]) + outstring[i];
+		//trim whitespace from end
+		while(e >= outstring[i] && ISWHITESPACE(*e)) *e--=0;
+		*/
+		outstring[i] = string_trim(outstring[i]);
+	}
+
+	return ret;
+}
+
+//DESTRUCTIVE. fucks with the origional string
+//also sets any empty strings to null
+int string_splitND(char *s, const char delim, char ** outstring, int num){
+	if(num <1)return 0; //why bother?
+	int ret;
+	outstring[0] = s;
+	//preprocess, find start of each word and null the delim
+	for(ret = 1; ret < num; ret++){
+		char * d = strchr(s, delim);
+		if(!d) break;
+		s = outstring[ret] = d+1;
+		*d = 0;
+	}
+	int i;
+	for(i = 0; i < ret; i++){
+		outstring[i] = string_trimD(outstring[i]);
+	}
+
+	return ret;
+}

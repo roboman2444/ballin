@@ -23,4 +23,16 @@ int string_testEqualNCI(const char *one, const char * two, const unsigned int n)
 unsigned int string_toVec(const char *s, vec_t *v, const unsigned int maxdem);
 unsigned int string_countWords(const char *s);
 
+
+//will fuck with the origonal string
+char * string_trim(char * in);
+//will fuck with the origional string
+//will also return 0 if string is entirely whitespace
+char * string_trimD(char * in);
+//will fuck with the origional string, does not duplicate
+int string_splitN(char *s, char delim, char ** out, int max);
+//will fuck with the origional string, does not duplicate
+//also sets empty strings to 0 for ease of use
+int string_splitND(char *s, char delim, char ** out, int max);
+
 #endif

@@ -392,35 +392,15 @@ int shader_addCvar(shader_t *s, char * c){
 
 	char *strs[4] = {0, 0, 0, 0};
 
-	//todo make this little parsing code a helper function with any number of fields
-
-	//"preprocess"... find all the delims, set pointers to them, set them to null
-	int numfields;
-	strs[0] = c;
-	for(numfields = 1; numfields < 4; numfields++){
-		char * delim = strchr(c, ',');
-		if(!delim) break;
-		c = strs[numfields] = delim+1;
-		*delim = 0;
-	}
-
-	int i;
-	for(i = 0; i < numfields; i++){
-		//trim whitespace at beginning
-		while(*(strs[i]) &&  ISWHITESPACE(*(strs[i]))) strs[i]++;
-		//find end
-		char *e = strlen(strs[i]) + strs[i];
-		//trim whitespace at end
-		while(e >= strs[i] && ISWHITESPACE(*e)) *e--=0;
-	}
+	int numfields = string_splitND(c, ',', strs, 4);
 	printf("parsed %i words: %s %s %s %s\n", numfields, strs[0], strs[1], strs[2], strs[3]);
 	if(numfields < 2){
-		printf("SHADER/addCvar error only parsed %i words in the cvar data, my syntax is \"cvar cvar_name shader_name (type) (default)\"\n", i);
+		printf("SHADER/addCvar error only parsed %i words in the cvar data, my syntax is \"cvar cvar_name shader_name (type) (default)\"\n", numfields);
 		return 0;
 	}
-	if(numfields < 4 || strlen(strs[3]) < 1)strs[3] = "0";
+	if(!strs[3])strs[3] = "0";
 	//TODO, stuff like uniform or not, saveable, etc
-	if(numfields < 3 || strlen(strs[2]) < 1 )strs[2] = "define";
+	if(!strs[2])strs[2] = "define";
 
 	//check if cvar exists
 	cvar_t *cv = cvar_findByNameRPOINT(strs[0]);
@@ -459,7 +439,7 @@ int shader_addCvar(shader_t *s, char * c){
 	k->next = 0;
 	*sptr = k;
 
-	return i;
+	return numfields;
 }
 
 int shader_parseProgramFile(shader_t *s){
@@ -472,6 +452,7 @@ int shader_parseProgramFile(shader_t *s){
 			file_t f = file_open(s->name, "r");
 			char * line;
 			for(line = file_getEntireLine(&f); line; free(line), line = file_getEntireLine(&f)){
+				/*
 				//find deliminator
 				char * c;
 				char * strend = strlen(line) + line;
@@ -496,7 +477,6 @@ int shader_parseProgramFile(shader_t *s){
 				if(vardata >= strend) vardata = 0;
 				//trim whitespace from end of varname
 				else while(c > vardata && ISWHITESPACE(*c)) *c--=0; //todo make sure this is OK
-
 				printf("Varname: \"%s\"\t\tVardata: \"%s\"\n", varname, vardata);
 				if(varname && vardata){
 					if(string_testEqualCI(varname, "VertexSource"))		shader_addSource(s, vardata, 1);
@@ -504,6 +484,18 @@ int shader_parseProgramFile(shader_t *s){
 					else if(string_testEqualCI(varname, "GeometrySource"))	shader_addSource(s, vardata, 3);
 					else if(string_testEqualCI(varname, "Cvar"))		shader_addCvar(s, vardata);
 				}
+				*/
+//				printf("Line:%s\n", line);
+				char *vd[2] = {0, 0};
+				string_splitND(line, ':', vd, 2);
+				printf("Varname: \"%s\"\t\tVardata: \"%s\"\n", vd[0], vd[1]);
+				if(vd[0] && vd[1]){
+					if(string_testEqualCI(vd[0], "VertexSource"))		shader_addSource(s, vd[1], 1);
+					else if(string_testEqualCI(vd[0], "FragmentSource"))	shader_addSource(s, vd[1], 2);
+					else if(string_testEqualCI(vd[0], "GeometrySource"))	shader_addSource(s, vd[1], 3);
+					else if(string_testEqualCI(vd[0], "Cvar"))		shader_addCvar(s, vd[1]);
+				}
+
 			}
 			file_close(&f);
 			s->type =1;
