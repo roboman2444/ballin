@@ -9,6 +9,8 @@
 #include "glmanager.h" //init
 
 #include "cvarmanager.h"
+
+#include "matrixlib.h"
 #include "entitymanager.h" //init
 
 
