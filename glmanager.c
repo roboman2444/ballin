@@ -106,7 +106,7 @@ int cnt = 0;
 //ALL OF THIS TEMP
 int gl_renderFrame(void){ //temp
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	int mid = model_register("models/test.iqm");
+	int mid = model_register("models/coil.iqm");
 	model_t *m = model_returnById(mid);
 	model_load(m);
 	int sid = shader_register("shaders/test.program");
