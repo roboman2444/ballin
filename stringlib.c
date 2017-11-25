@@ -121,6 +121,10 @@ char * string_trimD(char * in){
 //TODO functions that dont fuck with the origional string
 //TODO splits that dynamically allocate more space and dont have a maxnum
 
+
+
+//essentially strtok but also trims
+
 //DESTRUCTIVE. fucks with the origional string
 int string_splitN(char *s, const char delim, char ** outstring, int num){
 	if(num <1)return 0; //why bother?
